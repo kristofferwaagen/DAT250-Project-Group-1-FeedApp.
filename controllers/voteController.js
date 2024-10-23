@@ -47,10 +47,22 @@ class VoteController {
         let user = users.get(username) || { username, votes: [] };
 
         const newVote = { publishedAt, voteOption };
+
+        //Legger til valget lokalt
         user.votes.push(newVote);
         users.set(username, user);
 
-        return res.status(201).json(newVote);
+        //Sender valget til rabbitmq
+        const voteData = {username, publishedAt, voteOption};
+
+        try {
+            await this.pollManager.publishToQueue(voteData);
+            return res.status(201).json(newVote);
+        } catch (error){
+            console.error('Error sending vote to Rabbitmq:', error);
+            return res.status(500).json({message: 'Error processing vote'});
+
+        }
     }
 
     // PUT: Oppdater en spesifikk vote etter ID
