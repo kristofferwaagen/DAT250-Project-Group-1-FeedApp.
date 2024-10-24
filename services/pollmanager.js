@@ -6,6 +6,7 @@ const amqp = require('amqplib');
 class PollManager {
     constructor() {
         this.queue = 'votes_queue';
+        this.pollQueue = 'poll_queue';
         this.connection = null;
         this.channel = null;
         this.init();
@@ -14,23 +15,25 @@ class PollManager {
     //Setter opp rabbitmq conenction og kanal
     async init(){
         try{
-            this.connection = await amqp.connect('amqp://localhost';)
+            this.connection = await amqp.connect('amqp://localhost');
             this.channel = await this.connection.createChannel();
-            await this.channel.assertQueue(this.queue, {durable: true});
 
+
+            await this.channel.assertQueue(this.queue, {durable: true});
+            await this.channel.assertQueue(this.pollqueue, {durable: true});
         } catch (error){
             console.error('Error connecting to Rabbitmq:', error);
         }
     }
     //Sender message til queuen
-    async publishToQueue(message){
+    async publishToQueue(queue, message){
         try{
             if(!this.channel){
                 console.error('Rabbitmq channel is not initialized');
                 return;
             }
-            this.channel.sendToQueue(this.queue, Buffer.from(JSON.stringify(message)), {persistent: true});
-            console.log('Message sent to rabbitmq:', message);
+            this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {persistent: true});
+            console.log('Message sent to rabbitmq queue (${queue}):', message);
 
         }catch (error){
             console.error('Error publishing message:', error);
@@ -40,12 +43,12 @@ class PollManager {
 
     // Hent alle polls fra databasen
     async getPolls() {
-        return await Poll.find();
+        return Poll.find();
     }
 
     // Hent en spesifikk poll ved ID
     async getPollById(pollId) {
-        return await Poll.findById(pollId);
+        return Poll.findById(pollId);
     }
 
     // Opprett ny poll i databasen
@@ -56,7 +59,19 @@ class PollManager {
             validUntil,
             voteOptions,
         });
-        return await newPoll.save();
+        const savedPoll = await newPoll.save()
+
+        const pollData = {
+            action: 'create',
+            pollId: savedPoll._id,
+            question: savedPoll.question,
+            publishedAt: savedPoll.publishedAt,
+            validUntil: savedPoll.validUntil,
+            voteOptions: savedPoll.voteOptions,
+        };
+        await this.publishToQueue(this.pollQueue, pollData)
+
+        return savedPoll;
     }
 
     // Oppdater en poll i databasen ved ID
@@ -68,19 +83,44 @@ class PollManager {
             poll.validUntil = validUntil;
             poll.voteOptions = voteOptions;
 
-            return await poll.save();
+            const updatedPoll = await poll.save()
+
+            const pollData = {
+                action: 'update',
+                pollId: updatedPoll._id,
+                question: updatedPoll.question,
+                publishedAt: updatedPoll.publishedAt,
+                validUntil: updatedPoll.validUntil,
+                voteOptions: updatedPoll.voteOptions,
+            };
+            await this.publishToQueue(this.pollQueue, pollData);
+            return updatedPoll;
         }
-        return null; // Returner null hvis poll ikke ble funnet
+        return null;
+
     }
 
     // Slett en poll fra databasen ved ID
     async deletePoll(pollId) {
-        return await Poll.findByIdAndDelete(pollId);
+        const deletedPoll = await Poll.findByIdAndDelete(pollId);
+
+        if (deletedPoll){
+            const pollData = {
+                action: 'delete',
+                pollId: deltedPoll._id,
+                question: deletedPoll.question,
+            };
+            await this.publishToQueue(this.pollQueue, pollData);
+        }
+        return deletedPoll;
     }
 
     // Slett alle polls fra databasen
     async deleteAllPolls() {
-        return await Poll.deleteMany();
+        const result = await Poll.deleteMany();
+
+        await this.publishToQueue(this.pollQueue, {action: 'deleteAll'});
+        return result;
     }
 }
 
