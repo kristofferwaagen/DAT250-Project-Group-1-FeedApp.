@@ -13,18 +13,17 @@ const goToRegister = () => {
 const login = async () => {
   if (username.value != "" && email.value != "") {
     try {
-      const response = await axios.post("api/users/login", {
-        username: username.value,
-        email: email.value,
-      });
+      const response = await axios.get(`api/users/${username.value}`);
       if (response.status === 200) {
-        router.push("/home");
+        console.log("Authenticated");
+        router.push("/polls");
       }
     } catch (error) {
       if (error.response) {
         console.log(error.response.data);
         console.error("Status:", error.response.status);
         console.error("Headers:", error.response.headers);
+        output.value = "Username or email is incorrect";
       }
     }
   } else {
@@ -50,6 +49,6 @@ const login = async () => {
     </div>
     <button class="btn" type="submit">Login</button>
 
-    <p>Output: {{ output }}</p>
+    <p v-if="output != ''">{{ output }}</p>
   </form>
 </template>

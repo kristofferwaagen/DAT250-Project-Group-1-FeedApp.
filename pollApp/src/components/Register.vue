@@ -1,5 +1,7 @@
 <script setup>
 import { ref } from "vue";
+import axios from "axios";
+import router from "../router";
 
 const username = ref("");
 const email = ref("");
@@ -9,9 +11,10 @@ const createUser = async () => {
   let newUser = { username: username.value, email: email.value };
   try {
     const response = await axios.post("/api/users/", newUser);
-
-    console.log(response.data);
-    router.push("/login");
+    if (response.status === 201) {
+      console.log(response.data);
+      router.push("/");
+    }
   } catch (error) {
     if (error.response) {
       console.log(error.response.data);
@@ -24,7 +27,7 @@ const createUser = async () => {
 
 <template>
   Register account
-  <form @submit.prevent="createUser">
+  <form name="register" @submit.prevent="createUser">
     <div class="user">
       <label for="username"> Username</label>
       <input id="username" type="text" v-model="username" />
