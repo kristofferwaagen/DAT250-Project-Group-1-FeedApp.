@@ -53,6 +53,14 @@ const getPolls = async () => {
   } catch (error) {}
 };
 
+// TODO: implement function to vote on a poll option
+const vote = async () => {
+  try {
+    const response = await axios.get("api/polls/");
+    polls.value = response.data;
+  } catch (error) {}
+}
+
 // ensures the polls are fetched on page load
 onBeforeMount(getPolls);
 </script>
@@ -99,7 +107,10 @@ onBeforeMount(getPolls);
     <h1>Polls:</h1>
     <ul>
       <li v-for="(poll, index) in polls" :key="index">
-        {{ poll.question }} : {{ poll._id }}
+        <h3>{{ poll.question }}</h3>
+        <li v-for="(opt, index) in poll.voteOptions">
+          {{ opt.option }} -- {{ opt.votes }} <button>Vote</button>
+        </li>
       </li>
     </ul>
   </div>
