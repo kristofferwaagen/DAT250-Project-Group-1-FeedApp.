@@ -33,18 +33,18 @@ const login = async () => {
 </script>
 
 <template>
-  Don't have an account? Register one!
+  Don't have an account?
   <button class="btn" type="button" @click="goToRegister">
     Register account
   </button>
 
   <form name="Login" @submit.prevent="login">
     <div class="user">
-      <label for="username"> Username</label>
+      <label for="username"> Username:</label><br />
       <input id="username" type="text" v-model="username" />
     </div>
     <div class="user">
-      <label for="email"> Email</label>
+      <label for="email"> Email:</label><br />
       <input id="email" type="text" v-model="email" />
     </div>
     <button class="btn" type="submit">Login</button>
@@ -52,3 +52,16 @@ const login = async () => {
     <p v-if="output != ''">{{ output }}</p>
   </form>
 </template>
+
+<style scoped>
+form {
+  padding: 10%;
+  max-width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+input {
+  width: 100%;
+}
+</style>

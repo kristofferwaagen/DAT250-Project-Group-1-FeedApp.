@@ -74,15 +74,16 @@ body {
 }
 
 button {
-  background-color: var(--vt-c-black-soft);
-  color: var(--vt-c-text-dark-1);
-  border-color: var(--vt-c-white-soft);
-  border-width: 2px;
+  background-color: #f2f2f2;
+  border-color: var(--color-background);
+  border: 10px;
   border-radius: 3px;
 }
 
 input {
-  background-color: var(--vt-c-black-soft);
-  color: var(--vt-c-text-dark-1);
-  border-color: var(--vt-c-white-soft);
+  background-color: dimgray;
+  border-color: var(--color-background);
+  border: 1px;
+  border-radius: 3px;
+  color: #f2f2f2;
 }

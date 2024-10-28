@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onBeforeUpdate, ref } from "vue";
+import { onBeforeMount, ref } from "vue";
 import axios from "axios";
 
 const polls = ref([]);
@@ -7,6 +7,7 @@ const question = ref("");
 const option1 = ref({ option: "" });
 const option2 = ref({ option: "" });
 const voteOptions = ref([]);
+const counter = ref(0);
 var allOptions = [];
 
 const addOption = () => {
@@ -23,6 +24,7 @@ const handleSubmit = () => {
   createPoll();
 };
 
+// TODO: conditional. Only show create poll if logged in
 // sends a POST request to create a new poll
 const createPoll = async () => {
   try {
@@ -54,11 +56,14 @@ const getPolls = async () => {
 };
 
 // TODO: implement function to vote on a poll option
-const vote = async () => {
+// TODO: make request dynamic based on logged in user
+const vote = async (index, voteOption) => {
   try {
-    const response = await axios.get("api/polls/");
-    polls.value = response.data;
+    const response = await axios.post("api/users/test/votes/", {publishedAt: new Date(), voteOption: voteOption});
+    getPolls();
+    
   } catch (error) {}
+  
 }
 
 // ensures the polls are fetched on page load
@@ -66,7 +71,7 @@ onBeforeMount(getPolls);
 </script>
 
 <template>
-  <div>
+  <div id="polls">
     <form @submit.prevent="handleSubmit">
       <div>
         <input
@@ -98,20 +103,42 @@ onBeforeMount(getPolls);
           name="option"
           id="voteOpt"
           placeholder="Enter vote option"
-        />
-        <button @click.prevent="removeOption(index)">Remove option</button>
+        /> 
+        - <button @click.prevent="removeOption(index)">Remove option</button>
       </div>
       <button @click.prevent="addOption">Add vote option</button><br />
       <button type="submit">Submit</button>
     </form>
+    <div id="dashboard">
     <h1>Polls:</h1>
     <ul>
       <li v-for="(poll, index) in polls" :key="index">
         <h3>{{ poll.question }}</h3>
-        <li v-for="(opt, index) in poll.voteOptions">
-          {{ opt.option }} -- {{ opt.votes }} <button>Vote</button>
+        <li v-for="(opt, optIndex) in poll.voteOptions" :key="optIndex">
+          {{ opt.option }} -- {{ opt.votes }} <button @click.prevent="vote(index, opt)">Vote</button>
         </li>
       </li>
     </ul>
   </div>
+  </div>
 </template>
+
+<style scoped>
+
+#polls {
+  padding: 10%;
+  max-width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#dashboard {
+  max-width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  margin: auto;
+  flex: auto;
+  align-content: center;
+}
+
+</style>
