@@ -7,7 +7,7 @@ const voteSchema = new Schema({
         required: true
     },
     voteOption: {
-        type: mongoose.Schema.Types.ObjectId, // Bruk ObjectId hvis det er en referanse til VoteOption
+        type: mongoose.Schema.Types.ObjectId, 
         ref: 'voteOption', 
         required: true
     },
@@ -16,6 +16,12 @@ const voteSchema = new Schema({
         ref: 'user',
         required: true
     }
+    /*poll: {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Poll', 
+        required: true 
+    }
+    */
 }, {timestamps: true});
 
 module.exports = mongoose.model('Vote', voteSchema)
