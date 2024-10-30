@@ -1,120 +1,94 @@
 // controllers/VoteController.js
-const PollManager = require('../services/pollmanager');
+const VoteManager = require('../services/votemanager');
+const voteManager = new VoteManager();
 
 class VoteController {
-    constructor() {
-        this.pollManager = new PollManager();
-    }
-
-    // GET: Hent alle brukernes votes
+    // GET: Hent alle votes for en spesifikk bruker
     async getUserVotes(req, res) {
         const username = req.params.username;
-        const users = this.pollManager.getUsers();
-
-        if (users.has(username)) {
-            const user = users.get(username);
-            const votes = user.votes;
-            return res.status(200).json(votes);
-        } else {
-            return res.status(404).json({ message: 'User not found' });
-        }
-    }
-
-    // GET: Hent spesifikk vote etter ID
-    async getVoteById(req, res) {
-        const { username, voteId } = req.params;
-        const users = this.pollManager.getUsers();
-
-        if (users.has(username)) {
-            const user = users.get(username);
-            const votes = user.votes;
-
-            if (voteId >= 0 && voteId < votes.length) {
-                const vote = votes[voteId];
-                return res.status(200).json(vote);
+        try {
+            const votes = await voteManager.getUserVotes(username);
+            if (!votes) {
+                return res.status(404).json({ message: 'User or votes not found' });
             }
-            return res.status(404).json({ message: 'Vote not found' });
+            res.status(200).json(votes);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
         }
-        return res.status(404).json({ message: 'User not found' });
     }
 
-    // POST: Opprett vote for bruker
+    // GET: Hent en spesifikk vote etter ID
+    async getVoteById(req, res) {
+        try {
+            const vote = await voteManager.getVoteById(req.params.voteId);
+            if (!vote) {
+                return res.status(404).json({ message: 'Vote not found' });
+            }
+            res.status(200).json(vote);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    // POST: Opprett en ny vote for en bruker
     async createVote(req, res) {
         const username = req.params.username;
         const { publishedAt, voteOption } = req.body;
-        const users = this.pollManager.getUsers();
-
-        let user = users.get(username) || { username, votes: [] };
-
-        const newVote = { publishedAt, voteOption };
-
-        //Legger til valget lokalt
-        user.votes.push(newVote);
-        users.set(username, user);
-
-        //Sender valget til rabbitmq
-        const voteData = {username, publishedAt, voteOption};
+        const voteData = { username, publishedAt, voteOption };
 
         try {
-            await this.pollManager.publishToQueue(voteData);
-            return res.status(201).json(newVote);
-        } catch (error){
-            console.error('Error sending vote to Rabbitmq:', error);
-            return res.status(500).json({message: 'Error processing vote'});
+            // Create the vote using the vote manager
+            const vote = await voteManager.createVote(username, voteOption);
 
+            // Publish the vote to RabbitMQ
+            await this.pollManager.publishToQueue(voteData);
+
+            // Return the created vote
+            return res.status(201).json(vote);
+        } catch (error) {
+            console.error('Error processing vote:', error);
+            return res.status(500).json({ message: 'Error processing vote' });
         }
     }
 
     // PUT: Oppdater en spesifikk vote etter ID
     async updateVote(req, res) {
-        const username = req.params.username;
-        const { voteId } = req.params; // Mangel på voteId her
-        const { publishedAt, voteOption } = req.body;
-        const users = this.pollManager.getUsers();
-
-        if (users.has(username)) {
-            const user = users.get(username);
-            const votes = user.votes;
-
-            if (voteId >= 0 && voteId < votes.length) {
-                const updatedVote = { publishedAt, voteOption };
-                votes[voteId] = updatedVote;
-                return res.status(200).json(updatedVote);
+        const { voteId } = req.params;
+        const { publishedAt, voteOptionId } = req.body; // Også her bruker vi voteOptionId
+        try {
+            const updatedVote = await voteManager.updateVote(voteId, publishedAt, voteOptionId);
+            if (!updatedVote) {
+                return res.status(404).json({ message: 'Vote not found' });
             }
-            return res.status(404).json({ message: 'Vote not found' });
+            res.status(200).json(updatedVote);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
         }
-        return res.status(404).json({ message: 'User not found' });
     }
 
     // DELETE: Slett alle votes for en bruker
     async deleteAllVotes(req, res) {
-        const username = req.params.username;
-        const users = this.pollManager.getUsers();
-
-        if (users.has(username)) {
-            const user = users.get(username);
-            user.votes = [];
-            return res.status(200).json({ message: 'All votes deleted' });
+        const userId = req.params.userId;
+        try {
+            await voteManager.deleteAllVotesForUser(userId);
+            res.status(200).json({ message: 'All votes deleted' });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
         }
-        return res.status(404).json({ message: 'User not found' });
     }
 
-    // DELETE: Slett spesifikk vote etter ID
+    // DELETE: Slett en spesifikk vote etter ID
     async deleteVote(req, res) {
-        const { username, voteId } = req.params;
-        const users = this.pollManager.getUsers();
-
-        if (users.has(username)) {
-            const user = users.get(username);
-            const votes = user.votes;
-
-            if (voteId >= 0 && voteId < votes.length) {
-                votes.splice(voteId, 1); // Sletter voten
-                return res.status(200).json({ message: 'Vote deleted' });
+        const { voteId } = req.params;
+        try {
+            const deletedVote = await voteManager.deleteVote(voteId);
+            if (!deletedVote) {
+                return res.status(404).json({ message: 'Vote not found' });
             }
-            return res.status(404).json({ message: 'Vote not found' });
+            res.status(200).json({ message: 'Vote deleted' });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
         }
-        return res.status(404).json({ message: 'User not found' });
     }
 }
 

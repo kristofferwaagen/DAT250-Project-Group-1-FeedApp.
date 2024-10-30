@@ -1,11 +1,12 @@
 // controllers/UserController.js
-const User = require('../models/user');
+const UserManager = require('../services/usermanager');
+const userManager = new UserManager();
 
 class UserController {
     // GET: Alle brukere
     async getUsers(req, res) {
         try {
-            const users = await User.find();
+            const users = await userManager.getAllUsers();
             res.status(200).json(users);
         } catch (err) {
             res.status(500).json({ message: 'Error fetching users' });
@@ -15,7 +16,7 @@ class UserController {
     // GET: Hent spesifikk bruker etter brukernavn
     async getUserByUsername(req, res) {
         try {
-            const user = await User.findOne({ username: req.params.username });
+            const user = await userManager.getUserByUsername(req.params.username);
             if (user) {
                 res.status(200).json(user);
             } else {
@@ -29,29 +30,23 @@ class UserController {
     // POST: Opprett bruker
     async createUser(req, res) {
         try {
-            const existingUser = await User.findOne({ username: req.body.username });
-            if (existingUser) {
-                return res.status(409).json({ message: 'User already exists' });
-            }
-            // Ellers lage en ny bruker
-            const newUser = new User(req.body);
-            await newUser.save();
-            res.status(201).json({ message: 'User created' });
+            const newUser = await userManager.createUser(req.body);
+            res.status(201).json({ message: 'User created', user: newUser });
         } catch (err) {
-            res.status(500).json({ message: 'Error creating user' });
+            if (err.message === 'User already exists') {
+                res.status(409).json({ message: err.message });
+            } else {
+                res.status(500).json({ message: 'Error creating user' });
+            }
         }
     }
 
     // PUT: Oppdater bruker
     async updateUser(req, res) {
         try {
-            const updatedUser = await User.findOneAndUpdate(
-                { username: req.params.username },
-                req.body,
-                { new: true }
-            );
+            const updatedUser = await userManager.updateUser(req.params.username, req.body);
             if (updatedUser) {
-                res.status(200).json({ message: 'User updated' });
+                res.status(200).json({ message: 'User updated', user: updatedUser });
             } else {
                 res.status(404).json({ message: 'User not found' });
             }
@@ -63,7 +58,7 @@ class UserController {
     // DELETE: Slett bruker
     async deleteUser(req, res) {
         try {
-            const deletedUser = await User.findOneAndDelete({ username: req.params.username });
+            const deletedUser = await userManager.deleteUser(req.params.username);
             if (deletedUser) {
                 res.status(200).json({ message: 'User deleted' });
             } else {
@@ -77,7 +72,7 @@ class UserController {
     // DELETE: Slett alle brukere
     async deleteAllUsers(req, res) {
         try {
-            await User.deleteMany();
+            await userManager.deleteAllUsers();
             res.status(200).json({ message: 'All users deleted' });
         } catch (err) {
             res.status(500).json({ message: 'Error deleting all users' });
