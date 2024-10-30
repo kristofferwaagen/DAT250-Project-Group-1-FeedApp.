@@ -14,6 +14,9 @@ const login = async () => {
   if (username.value != "" && email.value != "") {
     try {
       const response = await axios.get(`api/users/${username.value}`);
+      console.log(response.data);
+      console.log(response.data.username);
+      console.log(response.data.email);
       if (response.status === 200) {
         console.log("Authenticated");
         router.push("/polls");

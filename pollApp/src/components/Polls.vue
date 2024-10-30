@@ -38,6 +38,7 @@ const createPoll = async () => {
     });
     // appends the lates poll to the list
     polls.value.push(response.data.question);
+    console.log(response.data);
   } catch (error) {
     if (error.response) {
       console.log(error.response.data);
