@@ -4,14 +4,14 @@ import axios from "axios";
 
 const polls = ref([]);
 const question = ref("");
-const option1 = ref({ option: "" });
-const option2 = ref({ option: "" });
+const option1 = ref({ caption: "" });
+const option2 = ref({ caption: "" });
 const voteOptions = ref([]);
 const counter = ref(0);
 var allOptions = [];
 
 const addOption = () => {
-  voteOptions.value.push({ option: "" });
+  voteOptions.value.push({ caption: "" });
 };
 
 const removeOption = (index) => {
@@ -32,13 +32,13 @@ const createPoll = async () => {
     const validUntil = new Date().setDate(publishedAt.getDate() + 30);
     const response = await axios.post("api/polls/", {
       question: question.value,
-      publishedAt: publishedAt,
-      validUntil: validUntil,
+      publishedAt: '2024-10-31T14:33:03.153Z',
+      validUntil: '2024-10-31T14:33:03.153Z',
       voteOptions: allOptions,
     });
     // appends the lates poll to the list
     polls.value.push(response.data.question);
-    console.log(response.data);
+    console.log("response data: ",response.data);
   } catch (error) {
     if (error.response) {
       console.log(error.response.data);
@@ -84,14 +84,14 @@ onBeforeMount(getPolls);
         /><br />
         <input
           type="text"
-          v-model="option1.option"
+          v-model="option1.caption"
           name="option"
           id="voteOpt"
           placeholder="Enter vote option"
         /><br />
         <input
           type="text"
-          v-model="option2.option"
+          v-model="option2.caption"
           name="option"
           id="voteOpt"
           placeholder="Enter vote option"
@@ -100,7 +100,7 @@ onBeforeMount(getPolls);
       <div v-for="(optionObj, index) in voteOptions" :key="index">
         <input
           type="text"
-          v-model="optionObj.option"
+          v-model="optionObj.caption"
           name="option"
           id="voteOpt"
           placeholder="Enter vote option"
@@ -116,7 +116,7 @@ onBeforeMount(getPolls);
       <li v-for="(poll, index) in polls" :key="index">
         <h3>{{ poll.question }}</h3>
         <li v-for="(opt, optIndex) in poll.voteOptions" :key="optIndex">
-          {{ opt.option }} -- {{ opt.votes }} <button @click.prevent="vote(index, opt)">Vote</button>
+          {{ opt.caption }} -- {{ opt.presentationOrder }} <button @click.prevent="vote(index, opt)">Vote</button>
         </li>
       </li>
     </ul>
