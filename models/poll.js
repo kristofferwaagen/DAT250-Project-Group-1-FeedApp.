@@ -16,13 +16,10 @@ const pollSchema = new mongoose.Schema({
   },
   voteOptions: [
     {
-      option: String,
-      votes: {
-        type: Number,
-        default: 0,
-      },
-    },
-  ],
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'VoteOption'
+    }
+  ]  
 });
 
 const Poll = mongoose.model('Poll', pollSchema);
