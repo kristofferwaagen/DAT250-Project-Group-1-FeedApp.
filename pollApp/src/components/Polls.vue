@@ -19,6 +19,7 @@ const removeOption = (index) => {
 };
 
 const handleSubmit = () => {
+  console.log("Form submitted");
   allOptions = [option1.value, option2.value].concat(voteOptions.value);
   console.log("Form submitted:", allOptions);
   createPoll();
@@ -29,16 +30,18 @@ const handleSubmit = () => {
 const createPoll = async () => {
   try {
     const publishedAt = new Date();
-    const validUntil = new Date().setDate(publishedAt.getDate() + 30);
-    const response = await axios.post("api/polls/", {
+    const validUntil = new Date();
+    validUntil.setDate(publishedAt.getDate() + 30);
+
+    const response = await axios.post("http://localhost:3000/polls/", {
       question: question.value,
-      publishedAt: '2024-10-31T14:33:03.153Z',
-      validUntil: '2024-10-31T14:33:03.153Z',
+      publishedAt,
+      validUntil,
       voteOptions: allOptions,
     });
     // appends the lates poll to the list
-    polls.value.push(response.data.question);
-    console.log("response data: ",response.data);
+    polls.value.push(response.data);
+    console.log("Poll created: ",response.data);
   } catch (error) {
     if (error.response) {
       console.log(error.response.data);
@@ -51,7 +54,7 @@ const createPoll = async () => {
 // sends a GET request to the server to fetch all polls
 const getPolls = async () => {
   try {
-    const response = await axios.get("api/polls/");
+    const response = await axios.get("http://localhost:3000/polls/");
     polls.value = response.data;
   } catch (error) {}
 };
@@ -60,7 +63,7 @@ const getPolls = async () => {
 // TODO: make request dynamic based on logged in user
 const vote = async (index, voteOption) => {
   try {
-    const response = await axios.post("api/users/test/votes/", {publishedAt: new Date(), voteOption: voteOption});
+    const response = await axios.post("http://localhost:3000/users/test/votes/", {publishedAt: new Date(), voteOption: voteOption});
     getPolls();
     
   } catch (error) {}

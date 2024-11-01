@@ -38,6 +38,7 @@ class PollController {
         }
 
         try {
+            console.log("Creating poll with data:", req.body);
             const newPoll = await this.pollManager.createPoll(question, publishedAt, validUntil, voteOptions);
             res.status(201).json(newPoll);
         } catch (error) {

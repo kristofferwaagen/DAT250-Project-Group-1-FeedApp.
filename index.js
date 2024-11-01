@@ -4,9 +4,11 @@ const mongoose = require('mongoose');
 const pollRouter = require('./routes/PollRouter');
 const voteRouter = require('./routes/voteRouter');
 const userRouter = require('./routes/userRouter');
-
+const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
+
+app.use(cors());
 
 app.use(express.json());
 
