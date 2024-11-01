@@ -1,5 +1,6 @@
 // controllers/PollController.js
 const PollManager = require('../services/pollmanager');
+const VoteOption = require('../models/voteOption');
 
 class PollController {
     constructor() {
@@ -38,7 +39,25 @@ class PollController {
         }
 
         try {
-            const newPoll = await this.pollManager.createPoll(question, publishedAt, validUntil, voteOptions);
+            console.log("Creating poll with data:", req.body);
+
+            const voteOptionsDocs = await Promise.all(
+                voteOptions.map(async (option, index) => {
+                    const newOption = new VoteOption({
+                        caption: option.caption,
+                        presentationOrder: index
+                    });
+                    return await newOption.save();
+                })
+            );
+
+            const newPoll = await this.pollManager.createPoll(
+                question,
+                publishedAt,
+                validUntil,
+                voteOptionsDocs.map(option => option._id)
+            );
+
             res.status(201).json(newPoll);
         } catch (error) {
             res.status(500).send('Error creating poll');

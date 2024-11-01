@@ -20,7 +20,7 @@ class PollManager {
 
 
             await this.channel.assertQueue(this.queue, {durable: true});
-            await this.channel.assertQueue(this.pollqueue, {durable: true});
+            await this.channel.assertQueue(this.pollQueue, {durable: true});
         } catch (error){
             console.error('Error connecting to Rabbitmq:', error);
         }
