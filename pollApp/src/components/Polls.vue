@@ -10,6 +10,10 @@ const voteOptions = ref([]);
 const counter = ref(0);
 var allOptions = [];
 
+// TODO: check user authentication
+const authenticated = true;
+console.log(authenticated);
+
 const addOption = () => {
   voteOptions.value.push({ caption: "" });
 };
@@ -56,6 +60,7 @@ const getPolls = async () => {
   try {
     const response = await axios.get("http://localhost:3000/polls/");
     polls.value = response.data;
+    console.log(polls)
   } catch (error) {}
 };
 
@@ -74,8 +79,9 @@ const vote = async (index, voteOption) => {
 onBeforeMount(getPolls);
 </script>
 
-<template>
-  <div id="polls">
+<template >
+  <div id="dashboard">
+  <div id="createPoll" v-if="authenticated">
     <form @submit.prevent="handleSubmit">
       <div>
         <input
@@ -98,7 +104,7 @@ onBeforeMount(getPolls);
           name="option"
           id="voteOpt"
           placeholder="Enter vote option"
-        />
+        /> 
       </div>
       <div v-for="(optionObj, index) in voteOptions" :key="index">
         <input
@@ -113,7 +119,9 @@ onBeforeMount(getPolls);
       <button @click.prevent="addOption">Add vote option</button><br />
       <button type="submit">Submit</button>
     </form>
-    <div id="dashboard">
+  </div>
+  <br/>
+  <div id="polls">
     <h1>Polls:</h1>
     <ul>
       <li v-for="(poll, index) in polls" :key="index">
@@ -123,26 +131,37 @@ onBeforeMount(getPolls);
         </li>
       </li>
     </ul>
+  
   </div>
-  </div>
+</div>
 </template>
 
 <style scoped>
 
-#polls {
-  padding: 10%;
+
+
+#dashboard {
+  display: grid;
+  align-items: center;
+}
+
+#createPoll {
+  display: flex;
+  align-items: center;
+  padding-bottom: 10%;
   max-width: fit-content;
   margin-left: auto;
   margin-right: auto;
 }
 
-#dashboard {
+#polls {
+  display: flex;
+  align-items: center;
   max-width: fit-content;
   margin-left: auto;
   margin-right: auto;
   margin: auto;
   flex: auto;
-  align-content: center;
 }
 
 </style>
