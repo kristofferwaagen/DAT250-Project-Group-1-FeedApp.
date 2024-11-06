@@ -30,6 +30,7 @@ const login = async () => {
   }
 };
 
+//TODO: anon authentication
 const loginAnon = () => {
   router.push("/polls");
 };
