@@ -11,7 +11,20 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Run tests
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 21 
+
+      - name: Install and test backend
         run: |
-          # Add your test commands here
+          cd backend
+          npm install
           npm test
+
+      - name: Install and test frontend
+        run: |
+          cd frontend
+          npm install
+          npm run test
