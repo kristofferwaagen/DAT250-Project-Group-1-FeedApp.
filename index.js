@@ -5,6 +5,7 @@ const pollRouter = require('./routes/PollRouter');
 const voteRouter = require('./routes/voteRouter');
 const userRouter = require('./routes/userRouter');
 const cors = require('cors');
+const postgresPool = require('./postgres');
 const app = express();
 const port = process.env.PORT || 3000;
 
