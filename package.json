@@ -5,8 +5,8 @@
   "scripts": {
     "start": "node index.js",
     "test": "jest",
-    "test:backend": "npm install && npm test",
-    "test:frontend": "npm install && npm run test"
+    "test:backend": "npm run test",
+    "test:frontend": "npm run test"
   },
   "keywords": [],
   "author": "",
