@@ -15,16 +15,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 21 
+          node-version: 21
 
-      - name: Install and test backend
+      - name: Install dependencies
         run: |
-          cd backend
           npm install
+
+      - name: Run tests
+        run: |
           npm test
-
-      - name: Install and test frontend
-        run: |
-          cd frontend
-          npm install
-          npm run test
