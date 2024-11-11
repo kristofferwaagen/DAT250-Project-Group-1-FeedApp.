@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, ref } from "vue";
+import { onBeforeMount, ref, computed } from "vue";
 import axios from "axios";
 
 const polls = ref([]);
@@ -10,9 +10,8 @@ const voteOptions = ref([]);
 const counter = ref(0);
 var allOptions = [];
 
-// TODO: check user authentication
-const authenticated = true;
-console.log(authenticated);
+// TODO: implement actually secure serverside authentication
+const isLoggedIn = computed(() => !!localStorage.getItem("authToken"));
 
 const addOption = () => {
   voteOptions.value.push({ caption: "" });
@@ -81,7 +80,7 @@ onBeforeMount(getPolls);
 
 <template >
   <div id="dashboard">
-  <div id="createPoll" v-if="authenticated">
+  <div id="createPoll" v-if="isLoggedIn">
     <form @submit.prevent="handleSubmit">
       <div>
         <input

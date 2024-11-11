@@ -1,5 +1,5 @@
 // services/userManager.js
-const User = require('../models/user');
+const User = require("../models/user");
 
 class UserManager {
   // Hent alle brukere
@@ -14,13 +14,10 @@ class UserManager {
 
   // Opprett en ny bruker
   async createUser(userData) {
-    const existingUser = await User.findOne({ 
-      $or: [
-        {username: userData.username },
-        { email: userData.email }
-      ]
-  });
-    if (existingUser) throw new Error('Username or email already exists');
+    const existingUser = await User.findOne({
+      $or: [{ username: userData.username }, { email: userData.email }],
+    });
+    if (existingUser) throw new Error("Username or email already in use");
     const newUser = new User(userData);
     return await newUser.save();
   }
