@@ -55,7 +55,7 @@ class PollController {
         question,
         publishedAt,
         validUntil,
-        voteOptionDocs.map((option) => option._id)
+        voteOptionDocs
       );
 
       res.status(201).json(newPoll);

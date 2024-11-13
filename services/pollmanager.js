@@ -42,7 +42,7 @@ class PollManager {
 
   // Hent alle polls fra databasen
   async getPolls() {
-    return Poll.find();
+    return await Poll.find().populate("voteOptions");
   }
 
   // Hent en spesifikk poll ved ID
