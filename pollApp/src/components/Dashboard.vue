@@ -63,12 +63,17 @@ const getPolls = async () => {
 
 // TODO: implement function to vote on a poll option
 // TODO: make request dynamic based on logged in user
-const vote = async (index, voteOption) => {
+const vote = async (voteOption) => {
+  let username = localStorage.getItem("authToken");
   try {
+    // const response = await axios.post(
+    //   "http://localhost:3000/users/" + username + "/votes/",
+    //   { publishedAt: new Date(), voteOption: voteOption }
+    // );
     const response = await axios.post(
-      "http://localhost:3000/users/test/votes/",
-      { publishedAt: new Date(), voteOption: voteOption }
+      "http://localhost:3000/polls/" + voteOption._id
     );
+    console.log(response);
     getPolls();
   } catch (error) {}
 };
@@ -126,8 +131,8 @@ onBeforeMount(getPolls);
         <h3 class="pollTitle">{{ poll.question }}</h3>
         <br />
         <div v-for="(opt, optIndex) in poll.voteOptions" :key="optIndex">
-          {{ opt.caption }} -- {{ opt.presentationOrder }}
-          <button class="voteBtn" @click="vote(index, opt)">Vote</button>
+          {{ opt.caption }} -- {{ opt.voteCount }}
+          <button class="voteBtn" @click="vote(opt)">Vote</button>
         </div>
       </div>
     </div>

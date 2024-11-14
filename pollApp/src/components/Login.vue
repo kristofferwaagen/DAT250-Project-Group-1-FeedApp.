@@ -15,7 +15,7 @@ const login = async () => {
     try {
       const response = await axios.get(`api/users/${username.value}`);
       if (response.status === 200) {
-        localStorage.setItem("authToken", response.data._id);
+        localStorage.setItem("authToken", username.value);
         router.push("/dashboard");
       }
     } catch (error) {

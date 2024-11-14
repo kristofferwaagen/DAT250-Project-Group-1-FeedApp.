@@ -46,6 +46,7 @@ class PollController {
           const newOption = new VoteOption({
             caption: option.caption,
             presentationOrder: index,
+            voteCount: 0,
           });
           return await newOption.save();
         })
@@ -82,6 +83,22 @@ class PollController {
       res.status(404).send("Poll not found");
     } catch (error) {
       res.status(500).send("Error updating poll");
+    }
+  }
+
+  // POST: oppdater antall votes på en voteOption
+  async updateVoteCount(req, res) {
+    try {
+      const voteOption = await VoteOption.findById(req.params.voteOptionId);
+      const updateVoteCount = await this.pollManager.incrementVoteCount(
+        voteOption
+      );
+      if (updateVoteCount) {
+        return res.status(200).json(updateVoteCount);
+      }
+      res.status(404).send("VoteOption not found");
+    } catch (error) {
+      res.status(500).send("Error updating vote count");
     }
   }
 

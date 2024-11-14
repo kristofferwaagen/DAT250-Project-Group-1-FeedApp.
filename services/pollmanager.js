@@ -2,7 +2,7 @@
 // services/pollmanager.js
 const Poll = require("../models/poll");
 const amqp = require("amqplib");
-const voteOption = require("../models/voteOption");
+const VoteOption = require("../models/voteOption");
 
 class PollManager {
   constructor() {
@@ -42,7 +42,7 @@ class PollManager {
 
   // Hent alle polls fra databasen
   async getPolls() {
-    return await Poll.find().populate("voteOptions");
+    return Poll.find().populate("voteOptions");
   }
 
   // Hent en spesifikk poll ved ID
@@ -96,6 +96,15 @@ class PollManager {
       return updatedPoll;
     }
     return null;
+  }
+
+  async incrementVoteCount(voteOption) {
+    const currentCount = voteOption.voteCount;
+    const updatedCount = currentCount + 1;
+    const updatedVoteOption = await VoteOption.updateOne({
+      voteCount: updatedCount,
+    });
+    return updatedVoteOption;
   }
 
   // Slett en poll fra databasen ved ID
