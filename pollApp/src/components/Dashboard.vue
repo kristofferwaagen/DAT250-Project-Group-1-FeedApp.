@@ -12,6 +12,13 @@ var allOptions = [];
 // TODO: implement actually secure serverside authentication
 const isLoggedIn = computed(() => !!localStorage.getItem("authToken"));
 
+const getUser = async () => {
+  const username = localStorage.getItem("authToken");
+  const response = await axios.get("http://localhost:3000/users/" + username);
+  console.log(response);
+  return response;
+};
+
 const addOption = () => {
   voteOptions.value.push({ caption: "" });
 };
@@ -63,17 +70,16 @@ const getPolls = async () => {
 
 // TODO: implement function to vote on a poll option
 // TODO: make request dynamic based on logged in user
-const vote = async (voteOption) => {
-  let username = localStorage.getItem("authToken");
+const vote = async (voteOptionId) => {
   try {
-    // const response = await axios.post(
-    //   "http://localhost:3000/users/" + username + "/votes/",
-    //   { publishedAt: new Date(), voteOption: voteOption }
-    // );
-    const response = await axios.post(
-      "http://localhost:3000/polls/" + voteOption._id
+    const username = localStorage.getItem("authToken");
+    const voteRes = await axios.post(
+      "http://localhost:3000/votes/" + username,
+      { voteOptionId: voteOptionId }
     );
-    console.log(response);
+    const countRes = await axios.post(
+      "http://localhost:3000/polls/" + voteOptionId
+    );
     getPolls();
   } catch (error) {}
 };
@@ -132,7 +138,7 @@ onBeforeMount(getPolls);
         <br />
         <div v-for="(opt, optIndex) in poll.voteOptions" :key="optIndex">
           {{ opt.caption }} -- {{ opt.voteCount }}
-          <button class="voteBtn" @click="vote(opt)">Vote</button>
+          <button class="voteBtn" @click="vote(opt._id)">Vote</button>
         </div>
       </div>
     </div>

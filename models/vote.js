@@ -1,27 +1,28 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
-const voteSchema = new Schema({
+const voteSchema = new Schema(
+  {
     publishedAt: {
-        type: Date,
-        required: true
+      type: Date,
+      required: true,
     },
-    voteOption: {
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'voteOption', 
-        required: true
+    voteOptionId: {
+      type: String,
+      required: true,
     },
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
-        required: true
-    }
+    username: {
+      type: String,
+      required: true,
+    },
     /*poll: {
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Poll', 
         required: true 
     }
     */
-}, {timestamps: true});
+  },
+  { timestamps: true }
+);
 
-module.exports = mongoose.model('Vote', voteSchema)
+module.exports = mongoose.model("Vote", voteSchema);

@@ -3,10 +3,14 @@ const UserManager = require("../services/usermanager");
 const userManager = new UserManager();
 
 class UserController {
+  constructor() {
+    this.userManager = new UserManager();
+  }
+
   // GET: Alle brukere
   async getUsers(req, res) {
     try {
-      const users = await userManager.getAllUsers();
+      const users = await this.userManager.getAllUsers();
       res.status(200).json(users);
     } catch (err) {
       res.status(500).json({ message: "Error fetching users" });
@@ -16,7 +20,9 @@ class UserController {
   // GET: Hent spesifikk bruker etter brukernavn
   async getUserByUsername(req, res) {
     try {
-      const user = await userManager.getUserByUsername(req.params.username);
+      const user = await this.userManager.getUserByUsername(
+        req.params.username
+      );
       if (user) {
         res.status(200).json(user);
       } else {
@@ -30,7 +36,7 @@ class UserController {
   // POST: Opprett bruker
   async createUser(req, res) {
     try {
-      const newUser = await userManager.createUser(req.body);
+      const newUser = await this.userManager.createUser(req.body);
       res.status(201).json({ message: "User created", user: newUser });
     } catch (err) {
       if (err.message === "Username or email already in use") {
@@ -44,7 +50,7 @@ class UserController {
   // PUT: Oppdater bruker
   async updateUser(req, res) {
     try {
-      const updatedUser = await userManager.updateUser(
+      const updatedUser = await this.userManager.updateUser(
         req.params.username,
         req.body
       );
@@ -61,7 +67,9 @@ class UserController {
   // DELETE: Slett bruker
   async deleteUser(req, res) {
     try {
-      const deletedUser = await userManager.deleteUser(req.params.username);
+      const deletedUser = await this.userManager.deleteUser(
+        req.params.username
+      );
       if (deletedUser) {
         res.status(200).json({ message: "User deleted" });
       } else {
@@ -75,7 +83,7 @@ class UserController {
   // DELETE: Slett alle brukere
   async deleteAllUsers(req, res) {
     try {
-      await userManager.deleteAllUsers();
+      await this.userManager.deleteAllUsers();
       res.status(200).json({ message: "All users deleted" });
     } catch (err) {
       res.status(500).json({ message: "Error deleting all users" });
