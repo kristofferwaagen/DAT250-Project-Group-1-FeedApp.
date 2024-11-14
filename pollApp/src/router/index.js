@@ -1,26 +1,23 @@
 import { createWebHistory, createRouter } from "vue-router";
 import Login from "../components/Login.vue";
-import Welcome from "../components/Welcome.vue";
-import Polls from "../components/Polls.vue";
+import Dashboard from "@/components/Dashboard.vue";
 import Register from "../components/Register.vue";
-import { compare } from "bcryptjs";
 
 // Defined routes for the application
 const routes = [
   {
     path: "/",
+    name: "login",
     component: Login,
   },
   {
-    path: "/home",
-    component: Welcome,
-  },
-  {
-    path: "/polls",
-    component: Polls,
+    path: "/dashboard",
+    name: "dashboard",
+    component: Dashboard,
   },
   {
     path: "/register",
+    name: "register",
     component: Register,
   },
 ];

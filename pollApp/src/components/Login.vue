@@ -16,7 +16,7 @@ const login = async () => {
       const response = await axios.get(`api/users/${username.value}`);
       if (response.status === 200) {
         localStorage.setItem("authToken", response.data._id);
-        router.push("/polls");
+        router.push("/dashboard");
       }
     } catch (error) {
       if (error.response) {
@@ -34,7 +34,7 @@ const login = async () => {
 //TODO: anon authentication
 const loginAnon = () => {
   localStorage.removeItem("authToken");
-  router.push("/polls");
+  router.push("/dashboard");
 };
 </script>
 

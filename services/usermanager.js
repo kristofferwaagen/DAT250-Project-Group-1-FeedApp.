@@ -4,7 +4,7 @@ const User = require("../models/user");
 class UserManager {
   // Hent alle brukere
   async getAllUsers() {
-    return await User.find();
+    return await User.find().populate("votes");
   }
 
   // Hent en spesifikk bruker etter brukernavn
