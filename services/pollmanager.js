@@ -101,7 +101,7 @@ class PollManager {
   async incrementVoteCount(voteOption) {
     const currentCount = voteOption.voteCount;
     const updatedCount = currentCount + 1;
-    const updatedVoteOption = await VoteOption.updateOne({
+    let updatedVoteOption = await VoteOption.findByIdAndUpdate(voteOption._id, {
       voteCount: updatedCount,
     });
     return updatedVoteOption;

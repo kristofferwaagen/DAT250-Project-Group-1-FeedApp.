@@ -89,7 +89,7 @@ class PollController {
   // POST: oppdater antall votes på en voteOption
   async updateVoteCount(req, res) {
     try {
-      const voteOption = await VoteOption.findById(req.params.voteOptionId);
+      let voteOption = await VoteOption.findById(req.params.voteOptionId);
       const updateVoteCount = await this.pollManager.incrementVoteCount(
         voteOption
       );
