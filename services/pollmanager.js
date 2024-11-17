@@ -1,8 +1,7 @@
-//Mongoose virker direkte på MongoDB uten å måtte bruke SQL, lignende funksjoner her som i JPA
-// services/pollmanager.js
 const Poll = require("../models/poll");
 const amqp = require("amqplib");
 const VoteOption = require("../models/voteOption");
+const pgClient = require("../pollsDb"); // PostgreSQL client for polls and votes
 
 class PollManager {
   constructor() {
@@ -12,7 +11,7 @@ class PollManager {
     this.channel = null;
     this.init();
   }
-  //Setter opp rabbitmq conenction og kanal
+
   async init() {
     try {
       this.connection = await amqp.connect("amqp://localhost");
@@ -24,7 +23,7 @@ class PollManager {
       console.error("Error connecting to Rabbitmq:", error);
     }
   }
-  //Sender message til queuen
+
   async publishToQueue(queue, message) {
     try {
       if (!this.channel) {
@@ -34,102 +33,87 @@ class PollManager {
       this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
         persistent: true,
       });
-      console.log("Message sent to rabbitmq queue (${queue}):", message);
+      console.log(`Message sent to Rabbitmq queue (${queue}):`, message);
     } catch (error) {
       console.error("Error publishing message:", error);
     }
   }
 
-  // Hent alle polls fra databasen
+  // Fetch all polls from PostgreSQL
   async getPolls() {
-    return Poll.find().populate("voteOptions");
+    try {
+      const pollsResult = await pgClient.query("SELECT * FROM polls");
+      const polls = pollsResult.rows;
+
+      for (const poll of polls) {
+        const optionsResult = await pgClient.query(
+          "SELECT * FROM vote_options WHERE poll_id = $1",
+          [poll.id]
+        );
+        poll.voteOptions = optionsResult.rows;
+      }
+
+      return polls;
+    } catch (error) {
+      console.error("Error fetching polls from PostgreSQL:", error);
+      throw error;
+    }
   }
 
-  // Hent en spesifikk poll ved ID
-  async getPollById(pollId) {
-    return Poll.findById(pollId);
-  }
-
-  // Opprett ny poll i databasen
+  // Create a new poll in PostgreSQL
   async createPoll(question, publishedAt, validUntil, voteOptions) {
-    const newPoll = new Poll({
-      question,
-      publishedAt,
-      validUntil,
-      voteOptions,
-    });
-    const savedPoll = await newPoll.save();
+    try {
+      const pollResult = await pgClient.query(
+        "INSERT INTO polls (question, published_at, valid_until) VALUES ($1, $2, $3) RETURNING *",
+        [question, publishedAt, validUntil]
+      );
+      const pollId = pollResult.rows[0].id;
 
-    const pollData = {
-      action: "create",
-      pollId: savedPoll._id,
-      question: savedPoll.question,
-      publishedAt: savedPoll.publishedAt,
-      validUntil: savedPoll.validUntil,
-      voteOptions: savedPoll.voteOptions,
-    };
-    await this.publishToQueue(this.pollQueue, pollData);
-
-    return savedPoll;
-  }
-
-  // Oppdater en poll i databasen ved ID
-  async updatePoll(pollId, question, publishedAt, validUntil, voteOptions) {
-    const poll = await Poll.findById(pollId);
-    if (poll) {
-      poll.question = question;
-      poll.publishedAt = publishedAt;
-      poll.validUntil = validUntil;
-      poll.voteOptions = voteOptions;
-
-      const updatedPoll = await poll.save();
+      for (const option of voteOptions) {
+        await pgClient.query(
+          "INSERT INTO vote_options (poll_id, caption, vote_count) VALUES ($1, $2, $3)",
+          [pollId, option.caption, 0]
+        );
+      }
 
       const pollData = {
-        action: "update",
-        pollId: updatedPoll._id,
-        question: updatedPoll.question,
-        publishedAt: updatedPoll.publishedAt,
-        validUntil: updatedPoll.validUntil,
-        voteOptions: updatedPoll.voteOptions,
+        action: "create",
+        pollId,
+        question,
+        publishedAt,
+        validUntil,
+        voteOptions,
       };
       await this.publishToQueue(this.pollQueue, pollData);
-      return updatedPoll;
+
+      return pollResult.rows[0];
+    } catch (error) {
+      console.error("Error creating poll in PostgreSQL:", error);
+      throw error;
     }
-    return null;
   }
 
-  async incrementVoteCount(voteOption) {
-    const currentCount = voteOption.voteCount;
-    const updatedCount = currentCount + 1;
-    let updatedVoteOption = await VoteOption.findByIdAndUpdate(voteOption._id, {
-      voteCount: updatedCount,
-    });
-    return updatedVoteOption;
+  // Increment vote count for a specific vote option in PostgreSQL
+  async incrementVoteCount(optionId) {
+    try {
+      await pgClient.query(
+        "UPDATE vote_options SET vote_count = vote_count + 1 WHERE id = $1",
+        [optionId]
+      );
+    } catch (error) {
+      console.error("Error updating vote count in PostgreSQL:", error);
+      throw error;
+    }
   }
 
-  // Slett en poll fra databasen ved ID
+  // MongoDB functionalities remain unchanged for non-poll-related features
   async deletePoll(pollId) {
-    const deletedPoll = await Poll.findByIdAndDelete(pollId);
-
-    if (deletedPoll) {
-      const pollData = {
-        action: "delete",
-        pollId: deltedPoll._id,
-        question: deletedPoll.question,
-      };
-      await this.publishToQueue(this.pollQueue, pollData);
-    }
-    return deletedPoll;
+    return Poll.findByIdAndDelete(pollId);
   }
 
-  // Slett alle polls fra databasen
   async deleteAllPolls() {
-    const result = await Poll.deleteMany();
-
-    await this.publishToQueue(this.pollQueue, { action: "deleteAll" });
-    return result;
+    return Poll.deleteMany();
   }
 }
 
-// Eksporter klassen slik at den kan brukes andre steder
 module.exports = PollManager;

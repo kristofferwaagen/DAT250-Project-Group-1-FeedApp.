@@ -1,13 +1,11 @@
-// controllers/PollController.js
 const PollManager = require("../services/pollmanager");
-const VoteOption = require("../models/voteOption");
 
 class PollController {
   constructor() {
     this.pollManager = new PollManager();
   }
 
-  // GET: Hent alle polls
+  // GET: Fetch all polls from PostgreSQL
   async getPolls(req, res) {
     try {
       const polls = await this.pollManager.getPolls();
@@ -17,10 +15,11 @@ class PollController {
     }
   }
 
-  // GET: Hent en spesifikk poll etter ID
+  // GET: Fetch a specific poll by ID (PostgreSQL for polls)
   async getPollById(req, res) {
+    const pollId = req.params.pollId;
     try {
-      const poll = await this.pollManager.getPollsById(req.params.pollId);
+      const poll = await this.pollManager.getPollById(pollId);
       if (poll) {
         return res.status(200).json(poll);
       }
@@ -30,79 +29,40 @@ class PollController {
     }
   }
 
-  // POST: Opprett ny poll
+  // POST: Create a new poll in PostgreSQL
   async createPoll(req, res) {
     const { question, publishedAt, validUntil, voteOptions } = req.body;
 
-    if (!question || !publishedAt || !validUntil) {
+    if (!question || !publishedAt || !validUntil || !voteOptions) {
       return res.status(400).send("Missing required fields");
     }
 
     try {
-      console.log("Creating poll with data:", req.body);
-
-      const voteOptionDocs = await Promise.all(
-        voteOptions.map(async (option, index) => {
-          const newOption = new VoteOption({
-            caption: option.caption,
-            presentationOrder: index,
-            voteCount: 0,
-          });
-          return await newOption.save();
-        })
-      );
-
       const newPoll = await this.pollManager.createPoll(
         question,
         publishedAt,
         validUntil,
-        voteOptionDocs
+        voteOptions
       );
-
       res.status(201).json(newPoll);
     } catch (error) {
       res.status(500).send("Error creating poll");
     }
   }
 
-  // PUT: Oppdater en poll etter ID
-  async updatePoll(req, res) {
-    const { question, publishedAt, validUntil, voteOptions } = req.body;
-
-    try {
-      const updatePoll = await this.pollManager.updatePoll(
-        req.params.pollId,
-        question,
-        publishedAt,
-        validUntil,
-        voteOptions
-      );
-      if (updatePoll) {
-        return res.status(200).json(updatePoll);
-      }
-      res.status(404).send("Poll not found");
-    } catch (error) {
-      res.status(500).send("Error updating poll");
-    }
-  }
-
-  // POST: oppdater antall votes på en voteOption
+  // POST: Update vote count for a specific vote option in PostgreSQL
   async updateVoteCount(req, res) {
+    const { voteOptionId } = req.params;
+
     try {
-      let voteOption = await VoteOption.findById(req.params.voteOptionId);
-      const updateVoteCount = await this.pollManager.incrementVoteCount(
-        voteOption
-      );
-      if (updateVoteCount) {
-        return res.status(200).json(updateVoteCount);
-      }
-      res.status(404).send("VoteOption not found");
+      await this.pollManager.incrementVoteCount(voteOptionId);
+      res.status(200).send("Vote count updated");
     } catch (error) {
       res.status(500).send("Error updating vote count");
     }
   }
 
-  // DELETE: Slett en poll etter ID
+  // DELETE: Delete a poll (kept using MongoDB for compatibility)
   async deletePoll(req, res) {
     try {
       await this.pollManager.deletePoll(req.params.pollId);
@@ -112,7 +72,7 @@ class PollController {
     }
   }
 
-  // DELETE: Slett alle polls
+  // DELETE: Delete all polls (kept using MongoDB for compatibility)
   async deleteAllPolls(req, res) {
     try {
       await this.pollManager.deleteAllPolls();
