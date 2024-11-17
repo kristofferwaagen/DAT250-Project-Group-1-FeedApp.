@@ -1,4 +1,4 @@
-const PollManager = require("../services/pollmanager");
+const PollManager = require("../services/pollManager");
 
 class PollController {
   constructor() {
@@ -12,20 +12,6 @@ class PollController {
       res.status(200).json(polls);
     } catch (error) {
       res.status(500).send("Error fetching polls");
-    }
-  }
-
-  // GET: Fetch a specific poll by ID (PostgreSQL for polls)
-  async getPollById(req, res) {
-    const pollId = req.params.pollId;
-    try {
-      const poll = await this.pollManager.getPollById(pollId);
-      if (poll) {
-        return res.status(200).json(poll);
-      }
-      res.status(404).send("Poll not found");
-    } catch (error) {
-      res.status(500).send("Error fetching poll");
     }
   }
 
@@ -51,34 +37,26 @@ class PollController {
   }
 
   // POST: Update vote count for a specific vote option in PostgreSQL
-  async updateVoteCount(req, res) {
+  async incrementVoteCount(req, res) {
     const { voteOptionId } = req.params;
 
     try {
-      await this.pollManager.incrementVoteCount(voteOptionId);
-      res.status(200).send("Vote count updated");
+      const updatedOption = await this.pollManager.incrementVoteCount(
+        voteOptionId
+      );
+      res.status(200).json(updatedOption);
     } catch (error) {
       res.status(500).send("Error updating vote count");
     }
   }
 
-  // DELETE: Delete a poll (kept using MongoDB for compatibility)
-  async deletePoll(req, res) {
-    try {
-      await this.pollManager.deletePoll(req.params.pollId);
-      res.status(200).send("Poll deleted");
-    } catch (error) {
-      res.status(500).send("Error deleting poll");
-    }
-  }
-
-  // DELETE: Delete all polls (kept using MongoDB for compatibility)
+  // DELETE: Delete all polls
   async deleteAllPolls(req, res) {
     try {
       await this.pollManager.deleteAllPolls();
-      res.status(200).send("All polls deleted");
+      res.status(200).send("Database cleared");
     } catch (error) {
-      res.status(500).send("Error deleting all polls");
+      res.status(500).send("Error clearing database");
     }
   }
 }

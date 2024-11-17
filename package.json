@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "setup-db": "node setup/setup.js",
     "start": "node index.js",
     "test": "echo 'No tests to run'",
     "test:backend": "npm run test",

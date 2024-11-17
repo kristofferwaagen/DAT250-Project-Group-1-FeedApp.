@@ -1,7 +1,5 @@
-const Poll = require("../models/poll");
+const pgClient = require("../pollsDb");
 const amqp = require("amqplib");
-const VoteOption = require("../models/voteOption");
-const pgClient = require("../pollsDb"); // PostgreSQL client for polls and votes
 
 class PollManager {
   constructor() {
@@ -20,20 +18,20 @@ class PollManager {
       await this.channel.assertQueue(this.queue, { durable: true });
       await this.channel.assertQueue(this.pollQueue, { durable: true });
     } catch (error) {
-      console.error("Error connecting to Rabbitmq:", error);
+      console.error("Error connecting to RabbitMQ:", error);
     }
   }
 
   async publishToQueue(queue, message) {
     try {
       if (!this.channel) {
-        console.error("Rabbitmq channel is not initialized");
+        console.error("RabbitMQ channel is not initialized");
         return;
       }
       this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
         persistent: true,
       });
-      console.log(`Message sent to Rabbitmq queue (${queue}):`, message);
+      console.log(`Message sent to RabbitMQ queue (${queue}):`, message);
     } catch (error) {
       console.error("Error publishing message:", error);
     }
@@ -47,7 +45,7 @@ class PollManager {
 
       for (const poll of polls) {
         const optionsResult = await pgClient.query(
-          "SELECT * FROM vote_options WHERE poll_id = $1",
+          "SELECT * FROM vote_options WHERE poll_id = $1 ORDER BY id",
           [poll.id]
         );
         poll.voteOptions = optionsResult.rows;
@@ -96,23 +94,28 @@ class PollManager {
   // Increment vote count for a specific vote option in PostgreSQL
   async incrementVoteCount(optionId) {
     try {
-      await pgClient.query(
-        "UPDATE vote_options SET vote_count = vote_count + 1 WHERE id = $1",
+      const result = await pgClient.query(
+        "UPDATE vote_options SET vote_count = vote_count + 1 WHERE id = $1 RETURNING vote_count",
         [optionId]
       );
+      return result.rows[0];
     } catch (error) {
       console.error("Error updating vote count in PostgreSQL:", error);
       throw error;
     }
   }
 
-  // MongoDB functionalities remain unchanged for non-poll-related features
-  async deletePoll(pollId) {
-    return Poll.findByIdAndDelete(pollId);
-  }
-
   async deleteAllPolls() {
-    return Poll.deleteMany();
+    try {
+      // Clear all polls and reset IDs stored
+      await pgClient.query(
+        "TRUNCATE TABLE vote_options, polls RESTART IDENTITY CASCADE"
+      );
+      console.log("Database cleared");
+    } catch (error) {
+      console.error("Error clearing database:", error);
+      throw error;
+    }
   }
 }
 

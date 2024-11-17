@@ -1,20 +1,21 @@
-const { Client } = require("pg");
+const { Pool } = require("pg");
+
+const pool = new Pool({
+  user: "feed-app-user", // Match the user from postgres.js
+  host: "localhost", // Match the user from postgres.js
+  database: "feed_app_sql", // Match the database from postgres.js
+  password: "feedapp123", // Match the password from postgres.js
+  port: 5432, // Match the port from postgres.js
+});
 
 async function initializePollsDatabase() {
-  const client = new Client({
-    user: "feed-app-user", // Match the user from postgres.js
-    host: "localhost", // Match the user from postgres.js
-    database: "feed_app_sql", // Match the database from postgres.js
-    password: "feedapp123", // Match the password from postgres.js
-    port: 5432, // Match the port from postgres.js
-  });
-
   try {
-    await client.connect();
+    // Test the connection
+    await pool.query("SELECT NOW()");
     console.log("Connected to PostgreSQL for polls");
 
-    // Create `polls` table if it doesn't exist
-    await client.query(`
+    // Ensure `polls` table exists
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS polls (
         id SERIAL PRIMARY KEY,
         question TEXT NOT NULL,
@@ -23,8 +24,8 @@ async function initializePollsDatabase() {
       );
     `);
 
-    // Create `vote_options` table if it doesn't exist
-    await client.query(`
+    // Ensure `vote_options` table exists
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS vote_options (
         id SERIAL PRIMARY KEY,
         poll_id INT NOT NULL,
@@ -37,11 +38,11 @@ async function initializePollsDatabase() {
     console.log("Poll and vote tables ensured in PostgreSQL");
   } catch (error) {
     console.error("Error setting up PostgreSQL for polls:", error);
-    process.exit(1); // Exit if initialization fails
+    throw error;
   }
-
-  return client;
 }
 
-const pgPollClient = initializePollsDatabase();
-module.exports = pgPollClient;
+// Initialize the database setup
+initializePollsDatabase();
+
+module.exports = pool; // Export the `Pool` instance

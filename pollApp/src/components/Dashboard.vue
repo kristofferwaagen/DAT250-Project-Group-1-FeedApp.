@@ -1,13 +1,13 @@
 <script setup>
-import { onBeforeMount, ref, computed } from "vue";
+import { ref, onMounted } from "vue";
 import axios from "axios";
 
 const polls = ref([]);
 const question = ref("");
-const option1 = ref({ caption: "" });
-const option2 = ref({ caption: "" });
-const voteOptions = ref([]);
-var allOptions = [];
+const voteOptions = ref([{ caption: "" }, { caption: "" }]);
+
+/*
+Yet to be implemented, commented out to test the other functionalities in the program
 
 // TODO: implement actually secure serverside authentication
 const isLoggedIn = computed(() => !!localStorage.getItem("authToken"));
@@ -18,6 +18,7 @@ const getUser = async () => {
   console.log(response);
   return response;
 };
+*/
 
 const addOption = () => {
   voteOptions.value.push({ caption: "" });
@@ -27,121 +28,86 @@ const removeOption = (index) => {
   voteOptions.value.splice(index, 1);
 };
 
-const handleSubmit = () => {
-  console.log("Form submitted");
-  allOptions = [option1.value, option2.value].concat(voteOptions.value);
-  console.log("Form submitted:", allOptions);
-  createPoll();
-};
-
-// sends a POST request to create a new poll
 const createPoll = async () => {
   try {
     const publishedAt = new Date();
     const validUntil = new Date();
     validUntil.setDate(publishedAt.getDate() + 30);
 
-    const response = await axios.post("http://localhost:3000/polls/", {
+    await axios.post("http://localhost:3000/polls", {
       question: question.value,
       publishedAt,
       validUntil,
-      voteOptions: allOptions,
+      voteOptions: voteOptions.value,
     });
-    // appends the lates poll to the list
-    polls.value.push(response.data);
-    console.log("Poll created: ", response.data);
+
+    // Immediately refresh the poll list
+    fetchPolls();
+
+    // Reset form
+    question.value = "";
+    voteOptions.value = [{ caption: "" }, { caption: "" }];
   } catch (error) {
-    if (error.response) {
-      console.log(error.response.data);
-      console.error("Status:", error.response.status);
-      console.error("Headers:", error.response.headers);
-    }
+    console.error("Error creating poll:", error);
   }
 };
 
-// sends a GET request to the server to fetch all polls
-const getPolls = async () => {
-  try {
-    const response = await axios.get("http://localhost:3000/polls/");
-    polls.value = response.data;
-    console.log(polls);
-  } catch (error) {}
-};
-
-// TODO: implement function to vote on a poll option
-// TODO: make request dynamic based on logged in user
 const vote = async (voteOptionId) => {
   try {
-    const username = localStorage.getItem("authToken");
-    const voteRes = await axios.post(
-      "http://localhost:3000/votes/" + username,
-      { voteOptionId: voteOptionId }
-    );
-    const countRes = await axios.post(
-      "http://localhost:3000/polls/" + voteOptionId
-    );
-    getPolls();
-  } catch (error) {}
+    await axios.post(`http://localhost:3000/polls/vote/${voteOptionId}`);
+    fetchPolls();
+  } catch (error) {
+    console.error("Error voting:", error);
+  }
 };
 
-// ensures the polls are fetched on page load
-onBeforeMount(getPolls);
+const clearDatabase = async () => {
+  try {
+    await axios.delete("http://localhost:3000/polls");
+    polls.value = [];
+  } catch (error) {
+    console.error("Error clearing database:", error);
+  }
+};
+
+const fetchPolls = async () => {
+  try {
+    const response = await axios.get("http://localhost:3000/polls");
+    // Ensure vote options maintain the correct order
+    polls.value = response.data.map((poll) => ({
+      ...poll,
+      voteOptions: poll.voteOptions.sort((a, b) => a.id - b.id),
+    }));
+  } catch (error) {
+    console.error("Error fetching polls:", error);
+  }
+};
+
+onMounted(fetchPolls);
 </script>
 
 <template>
-  <div class="dashboard">
-    <div class="createPoll" v-if="isLoggedIn">
-      <form @submit.prevent="handleSubmit">
-        <div>
-          <input
-            type="text"
-            v-model="question"
-            name="question"
-            id="voteQuestion"
-            placeholder="Enter question"
-          /><br />
-          <input
-            type="text"
-            v-model="option1.caption"
-            name="option"
-            id="voteOpt"
-            placeholder="Enter vote option"
-          /><br />
-          <input
-            type="text"
-            v-model="option2.caption"
-            name="option"
-            id="voteOpt"
-            placeholder="Enter vote option"
-          />
-        </div>
-        <div v-for="(optionObj, index) in voteOptions" :key="index">
-          <input
-            type="text"
-            v-model="optionObj.caption"
-            name="option"
-            id="voteOpt"
-            placeholder="Enter vote option"
-          />
-          - <button @click.prevent="removeOption(index)">Remove option</button>
-        </div>
-        <button @click.prevent="addOption">Add vote option</button><br />
-        <button type="submit">Submit</button>
-      </form>
+  <div>
+    <h1>Create a Poll</h1>
+    <input v-model="question" placeholder="Enter poll question" />
+    <div v-for="(option, index) in voteOptions" :key="index">
+      <input v-model="option.caption" placeholder="Enter option" />
+      <button @click="removeOption(index)">Remove</button>
     </div>
-    <br />
-    <div class="polls">
-      <h1>Polls:</h1>
-      <br />
-      <div class="poll" v-for="(poll, index) in polls" :key="index">
-        <h3 class="pollTitle">{{ poll.question }}</h3>
-        <br />
-        <div v-for="(opt, optIndex) in poll.voteOptions" :key="optIndex">
-          {{ opt.caption }} -- {{ opt.voteCount }}
-          <button class="voteBtn" @click="vote(opt._id)">Vote</button>
-        </div>
-      </div>
+    <button @click="addOption">Add Option</button>
+    <button @click="createPoll">Submit Poll</button>
+
+    <h1>Polls</h1>
+    <div v-for="poll in polls" :key="poll.id">
+      <h2>{{ poll.question }}</h2>
+      <ul>
+        <li v-for="option in poll.voteOptions" :key="option.id">
+          {{ option.caption }} (Votes: {{ option.vote_count }})
+          <button @click="vote(option.id)">Vote</button>
+        </li>
+      </ul>
     </div>
+    <button @click="clearDatabase">Clear Database</button>
   </div>
 </template>
 
