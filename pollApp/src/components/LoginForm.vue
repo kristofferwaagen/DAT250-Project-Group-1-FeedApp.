@@ -1,5 +1,9 @@
+<!--
+this is a reusable form component. It is used both for the login page and
+registration page
+-->
 <script setup>
-import { defineProps, defineEmits, reactive } from "vue";
+import { reactive } from "vue";
 
 const formData = reactive({
   username: "",
