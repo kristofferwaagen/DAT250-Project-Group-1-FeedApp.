@@ -1,4 +1,4 @@
-name: Test Workflow
+name: CI Workflow
 
 on:
   push:
@@ -11,13 +11,32 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 21
+          cache: "npm" # Cache npm-moduler
+
+      - name: Install dependencies
+        run: npm install
 
       - name: Run tests
-        run: |
-          npm --version
-          node --version
+        run: npm test
+
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 21
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build application
+        run: npm run build
