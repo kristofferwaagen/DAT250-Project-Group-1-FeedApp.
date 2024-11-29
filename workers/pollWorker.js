@@ -40,4 +40,4 @@ async function consumePolls(){
     }
 }
 
-consumePolls();
+module.exports = consumePolls;

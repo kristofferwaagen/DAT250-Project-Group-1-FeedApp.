@@ -2,20 +2,23 @@
 import { ref } from "vue";
 import axios from "axios";
 import router from "@/router";
-const username = ref("");
-const email = ref("");
+import LoginForm from "./LoginForm.vue";
+// const username = ref("");
+// const email = ref("");
 const output = ref("");
 
 const goToRegister = () => {
   router.push("/register");
 };
 
-const login = async () => {
-  if (username.value != "" && email.value != "") {
+async function login(formData) {
+  let username = formData.username;
+  let email = formData.email;
+  if (username != "" && email != "") {
     try {
-      const response = await axios.get(`api/users/${username.value}`);
+      const response = await axios.get(`api/users/${username}`);
       if (response.status === 200) {
-        localStorage.setItem("authToken", username.value);
+        localStorage.setItem("authToken", username);
         router.push("/dashboard");
       }
     } catch (error) {
@@ -29,7 +32,7 @@ const login = async () => {
   } else {
     output.value = "Username and email can not be empty";
   }
-};
+}
 
 //TODO: anon authentication
 const loginAnon = () => {
@@ -44,7 +47,9 @@ const loginAnon = () => {
     Register account
   </button>
 
-  <form name="Login" @submit.prevent="login">
+  <LoginForm formType="login" @submit="login"></LoginForm>
+
+  <!-- <form name="Login" @submit.prevent="login">
     <div class="user">
       <label for="username"> Username:</label><br />
       <input id="username" type="text" v-model="username" />
@@ -54,7 +59,7 @@ const loginAnon = () => {
       <input id="email" type="text" v-model="email" />
     </div>
     <button class="btn" type="submit">Login</button>
-  </form>
+  </form> -->
   <br />
   <button class="btn" @click.prevent="loginAnon">
     Continue without an account

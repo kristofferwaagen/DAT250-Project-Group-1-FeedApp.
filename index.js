@@ -7,19 +7,24 @@ const cors = require("cors");
 //const authenticateJWT = require("./middleware/authenticateJWT");  
 const app = express();
 const port = process.env.PORT || 3000;
+const pollWorker = require('./workers/pollWorker');
+const voteWorker = require('./workers/voteWorker');
 
 app.use(cors());
 app.use(express.json());
 
 // Koble til databasen
 mongoose
-  .connect("mongodb://localhost:27017/feedAppDB", {
+  .connect("mongodb://127.0.0.1:27017/feedAppDB", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
+    .then(() => {
+        console.log('Connected to MongoDB')
+        //Start workers
+        pollWorker();
+        voteWorker();
+    })
   .catch((error) => {
     console.error("Error connecting to MongoDB:", error);
   });
