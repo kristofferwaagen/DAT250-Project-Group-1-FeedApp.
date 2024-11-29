@@ -4,10 +4,6 @@ const Vote = require('../models/vote');
 const User = require('../models/user');
 const VoteOption = require('../models/voteOption');
 
-mongoose.connect('mongodb://localhost:27017/pollApp', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-});
 
 async function workVotes() {
     try {
@@ -61,4 +57,4 @@ async function workVotes() {
 }
 
 // Start the worker
-workVotes();
+module.exports = workVotes;
