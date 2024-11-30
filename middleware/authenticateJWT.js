@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 
+
 const authenticateJWT = (req, res, next) => {
     // Hent token fra headers
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -11,7 +12,7 @@ const authenticateJWT = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, 'your_jwt_secret'); // Verifiser tokenet
+        const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verifiser tokenet
         console.log('Decoded token:', decoded);  // Debugging: Sjekk om dekodingen er vellykket
         req.user = decoded;  // Legg dekodet data på request-objektet
         next();  // Fortsett til neste middleware eller rute

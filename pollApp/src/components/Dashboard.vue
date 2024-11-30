@@ -1,6 +1,7 @@
 <script setup>
 import { onBeforeMount, ref, computed } from "vue";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 const polls = ref([]);
 const question = ref("");
@@ -9,8 +10,12 @@ const option2 = ref({ caption: "" });
 const voteOptions = ref([]);
 var allOptions = [];
 
-// TODO: implement actually secure serverside authentication
-const isLoggedIn = computed(() => !!localStorage.getItem("authToken"));
+
+//Token authentication
+const token = localStorage.getItem("authToken");
+const userRole = localStorage.getItem("userRole");
+
+const isLoggedIn = computed(() => !!localStorage.getItem("authToken")); // Check if token exists
 
 const getUser = async () => {
   const username = localStorage.getItem("authToken");
@@ -37,6 +42,7 @@ const handleSubmit = () => {
 // sends a POST request to create a new poll
 const createPoll = async () => {
   try {
+    const token = localStorage.getItem("authToken");
     const publishedAt = new Date();
     const validUntil = new Date();
     validUntil.setDate(publishedAt.getDate() + 30);
@@ -46,7 +52,14 @@ const createPoll = async () => {
       publishedAt,
       validUntil,
       voteOptions: allOptions,
-    });
+    },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Add the token to the header
+          },
+
+        }
+    );
     // appends the lates poll to the list
     polls.value.push(response.data);
     console.log("Poll created: ", response.data);
@@ -62,30 +75,47 @@ const createPoll = async () => {
 // sends a GET request to the server to fetch all polls
 const getPolls = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/polls/");
+    const token = localStorage.getItem("authToken");
+    const response = await axios.get("http://localhost:3000/polls/", {
+      headers: {
+        Authorization: 'Bearer ${token}',
+      },
+    });
     polls.value = response.data;
     console.log(polls);
-  } catch (error) {}
+  } catch (error) {
+    console.error("Error fetching polls:", error);
+  }
 };
 
 // TODO: implement function to vote on a poll option
 // TODO: make request dynamic based on logged in user
 const vote = async (voteOptionId) => {
   try {
-    const username = localStorage.getItem("authToken");
-    const voteRes = await axios.post(
-      "http://localhost:3000/votes/" + username,
-      { voteOptionId: voteOptionId }
+    const token = localStorage.getItem("authToken");
+    await axios.post(
+        `http://localhost:3000/votes/${voteOptionId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Add the token to the header
+          },
+        }
     );
-    const countRes = await axios.post(
-      "http://localhost:3000/polls/" + voteOptionId
-    );
-    getPolls();
-  } catch (error) {}
+    getPolls(); // Refresh polls after voting
+  } catch (error) {
+    console.error("Error voting:", error);
+  }
 };
 
 // ensures the polls are fetched on page load
-onBeforeMount(getPolls);
+onBeforeMount(() => {
+  if (!isLoggedIn.value) {
+    window.location.href = "/";
+  } else {
+    getPolls(); // Fetch polls only if the user is authorized
+  }
+});
 </script>
 
 <template>

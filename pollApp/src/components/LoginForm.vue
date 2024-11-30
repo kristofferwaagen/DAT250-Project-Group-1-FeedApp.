@@ -4,6 +4,8 @@ registration page
 -->
 <script setup>
 import { reactive } from "vue";
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 const formData = reactive({
   username: "",
@@ -20,8 +22,30 @@ defineProps({
 
 const emit = defineEmits(["submit"]);
 
-function handleSubmit() {
-  emit("submit", { ...formData });
+async function handleSubmit() {
+  try {
+    const response = await axios.post("http://localhost:3000/auth/login", {
+      username: formData.username,
+      email: formData.email,
+    });
+
+    const token = response.data.token;
+    const decodedToken = jwtDecode(token);
+    console.log("Token received from login:", token);
+    // Store token and role in localStorage
+    localStorage.setItem("authToken", token);
+    localStorage.setItem("userRole", decodedToken.role);
+    console.log("Token and role saved. Redirecting to /dashboard...");
+
+    if (decodedToken) {
+      window.location.href = "/dashboard"; // Redirect all authenticated users to dashboard
+    } else {
+      window.location.href = "/"; // Redirect if authentication fails
+    }
+  } catch (error) {
+    console.error("Login failed:", error);
+    emit("submit", { success: false });
+  }
 }
 </script>
 

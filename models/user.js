@@ -14,6 +14,11 @@ const userSchema = new Schema({
         required: true,
         unique: true,
     },
+    role: {
+      type: String,
+      enum: ['admin', 'user'],
+      default: 'user',
+    },
     votes: [{
         type: mongoose.Schema.Types.ObjectId, //referanse til vote-skjemaet
         ref: 'vote',
