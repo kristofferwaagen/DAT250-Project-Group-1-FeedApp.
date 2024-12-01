@@ -12,32 +12,39 @@ const goToRegister = () => {
 };
 
 async function login(formData) {
-  let username = formData.username;
-  let email = formData.email;
-  if (username != "" && email != "") {
+  const { username, email } = formData; // Destructure formData
+
+  if (username && email) {
     try {
-      const response = await axios.get(`api/users/${username}`);
-      if (response.status === 200) {
-        localStorage.setItem("authToken", username);
-        router.push("/dashboard");
-      }
+      // Send POST request to the correct login endpoint
+      const response = await axios.post("http://localhost:3000/auth/login", {
+        username,
+        email,
+      });
+
+      const token = response.data.token; // Extract token from response
+      localStorage.setItem("authToken", token); // Store token in local storage
+      console.log("Login successful. Token saved:", token);
+
+      router.push("/dashboard"); // Redirect to dashboard
     } catch (error) {
       if (error.response) {
-        console.log(error.response.data);
-        console.error("Status:", error.response.status);
-        console.error("Headers:", error.response.headers);
-        output.value = "Username or email is incorrect";
+        console.error("Error during login:", error.response.data);
+        output.value = "Invalid username or email.";
+      } else {
+        console.error("Error during login:", error.message);
       }
     }
   } else {
-    output.value = "Username and email can not be empty";
+    output.value = "Username and email cannot be empty.";
   }
 }
 
 //TODO: anon authentication
 const loginAnon = () => {
-  localStorage.removeItem("authToken");
-  router.push("/dashboard");
+  localStorage.removeItem("authToken"); // Clear any stored token
+  localStorage.removeItem("userRole"); // Optional: Clear role as well
+  router.push("/dashboard"); // Navigate to the dashboard
 };
 </script>
 

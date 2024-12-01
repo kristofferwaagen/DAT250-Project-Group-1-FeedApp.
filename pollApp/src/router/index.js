@@ -32,18 +32,15 @@ const router = createRouter({
 //Navigation guard
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem("authToken");
-  const userRole = localStorage.getItem("userRole");
 
-  if (to.matched.some((record) => record.meta.requiresAuth)) {
-    if (!token) {
-      next("/"); // Redirect to login if no token is found
-    } else if (to.meta.roles && !to.meta.roles.includes(userRole)) {
-      next("/"); // Redirect if the user's role is not authorized
-    } else {
-      next(); // Authorized
-    }
+  if (to.path === "/dashboard") {
+    // Allow access to dashboard even without authentication
+    next();
+  } else if (!token && to.meta.requiresAuth) {
+    // Redirect to login if authentication is required
+    next("/"); // Redirect unauthenticated users to login
   } else {
-    next(); // No auth required
+    next(); // Allow access for authenticated users
   }
 });
 

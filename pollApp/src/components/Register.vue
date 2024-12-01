@@ -1,28 +1,37 @@
 <script setup>
-import { ref } from "vue";
+import { reactive } from "vue";
 import axios from "axios";
 import router from "../router";
 import LoginForm from "./LoginForm.vue";
 
-// const username = ref("");
-// const email = ref("");
+const formData = reactive({
+  username: "",
+  email: "",
+  role: "user", // Default role
+});
 
-// sends a POST request to the backend to create a new user
+// Function to register a new user
 async function createUser(formData) {
-  let newUser = { username: formData.username, email: formData.email };
+  let newUser = {
+    username: formData.username,
+    email: formData.email,
+    role: formData.role || "user",
+  };
+
   try {
-    const response = await axios.post("/api/users/", newUser);
+    const response = await axios.post("http://localhost:3000/auth/register", newUser);
+
     if (response.status === 201) {
-      console.log(response.data);
-      router.push("/");
+      console.log("User registered successfully:", response.data);
+      router.push("/"); // Redirect to login page after registration
     }
   } catch (error) {
     if (error.response) {
-      console.log(error.response.data);
-      console.error("Status:", error.response.status);
-      console.error("Headers:", error.response.headers);
+      console.error("Error registering user:", error.response.data);
+    } else {
+      console.error("Error registering user:", error);
     }
-    alert("Error registering user");
+    alert("Error registering user. Please try again.");
   }
 }
 </script>
@@ -30,18 +39,6 @@ async function createUser(formData) {
 <template>
   <div id="registration">
     <LoginForm formType="register" @submit="createUser"></LoginForm>
-    <!-- <h1>Register account</h1>
-    <form name="register" @submit.prevent="createUser">
-      <div class="user">
-        <label for="username"> Username:</label><br />
-        <input id="username" type="text" v-model="username" />
-      </div>
-      <div class="user">
-        <label for="email"> Email:</label><br />
-        <input id="email" type="text" v-model="email" />
-      </div>
-      <button class="btn" type="submit">Register</button>
-    </form> -->
   </div>
 </template>
 
@@ -57,3 +54,4 @@ input {
   width: 100%;
 }
 </style>
+

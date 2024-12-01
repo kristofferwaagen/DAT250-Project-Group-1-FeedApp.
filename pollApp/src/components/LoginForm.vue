@@ -5,17 +5,16 @@ registration page
 <script setup>
 import { reactive } from "vue";
 import axios from "axios";
-import { jwtDecode } from "jwt-decode";
 
 const formData = reactive({
   username: "",
   email: "",
 });
 
-defineProps({
+const props =defineProps({
   formType: {
     type: String,
-    default: "login", // 'login' or 'register'
+    required: true,
     validator: (value) => ["login", "register"].includes(value),
   },
 });
@@ -24,45 +23,31 @@ const emit = defineEmits(["submit"]);
 
 async function handleSubmit() {
   try {
-    const response = await axios.post("http://localhost:3000/auth/login", {
-      username: formData.username,
-      email: formData.email,
-    });
-
-    const token = response.data.token;
-    const decodedToken = jwtDecode(token);
-    console.log("Token received from login:", token);
-    // Store token and role in localStorage
-    localStorage.setItem("authToken", token);
-    localStorage.setItem("userRole", decodedToken.role);
-    console.log("Token and role saved. Redirecting to /dashboard...");
-
-    if (decodedToken) {
-      window.location.href = "/dashboard"; // Redirect all authenticated users to dashboard
-    } else {
-      window.location.href = "/"; // Redirect if authentication fails
+    if (props.formType === "login") {
+      // Login logic
+      emit("submit", formData);
+    } else if (props.formType === "register") {
+      // Registration logic
+      emit("submit", formData);
     }
   } catch (error) {
-    console.error("Login failed:", error);
-    emit("submit", { success: false });
+    console.error(`${props.formType} failed:`, error);
+    alert(`${props.formType === "login" ? "Login" : "Registration"} failed. Please try again.`);
   }
 }
 </script>
 
 <template>
-  <h2>{{ formType === "login" ? "Login" : "Register" }}</h2>
   <form @submit.prevent="handleSubmit">
-    <div class="user">
-      <label for="username"> Username:</label><br />
+    <div>
+      <label for="username">Username:</label>
       <input id="username" type="text" v-model="formData.username" />
     </div>
-    <div class="user">
-      <label for="email"> Email:</label><br />
+    <div>
+      <label for="email">Email:</label>
       <input id="email" type="text" v-model="formData.email" />
     </div>
-    <button type="submit">
-      {{ formType === "login" ? "Login" : "Register" }}
-    </button>
+    <button type="submit">{{ props.formType === "login" ? "Login" : "Register" }}</button>
   </form>
 </template>
 

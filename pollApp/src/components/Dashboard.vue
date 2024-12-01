@@ -41,50 +41,66 @@ const handleSubmit = () => {
 
 // sends a POST request to create a new poll
 const createPoll = async () => {
+  if (!isLoggedIn.value) {
+    alert("You must be logged in to create a poll.");
+    return;
+  }
   try {
     const token = localStorage.getItem("authToken");
     const publishedAt = new Date();
     const validUntil = new Date();
     validUntil.setDate(publishedAt.getDate() + 30);
 
-    const response = await axios.post("http://localhost:3000/polls/", {
-      question: question.value,
-      publishedAt,
-      validUntil,
-      voteOptions: allOptions,
-    },
+    const response = await axios.post(
+        "http://localhost:3000/polls/",
+        {
+          question: question.value,
+          publishedAt,
+          validUntil,
+          voteOptions: allOptions,
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`, // Add the token to the header
           },
-
         }
     );
-    // appends the lates poll to the list
+
     polls.value.push(response.data);
     console.log("Poll created: ", response.data);
   } catch (error) {
     if (error.response) {
-      console.log(error.response.data);
-      console.error("Status:", error.response.status);
-      console.error("Headers:", error.response.headers);
+      console.error("Error creating poll:", error.response.data);
     }
   }
 };
 
 // sends a GET request to the server to fetch all polls
 const getPolls = async () => {
+  console.log("Fetched polls:", polls.value);
   try {
     const token = localStorage.getItem("authToken");
-    const response = await axios.get("http://localhost:3000/polls/", {
-      headers: {
-        Authorization: 'Bearer ${token}',
-      },
-    });
+
+
+    const config = {
+      headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : {}, // Empty headers for public access
+    };
+
+    // Pass the config object to axios.get()
+    const response = await axios.get("http://localhost:3000/polls/", config);
+
+    // Update polls data
     polls.value = response.data;
-    console.log(polls);
+    console.log("Fetched polls:", polls.value);
   } catch (error) {
     console.error("Error fetching polls:", error);
+
+    // Handle 401 error (unauthorized access)
+    if (error.response && error.response.status === 401) {
+      alert("Error fetching polls. Please try again later.");
+    }
   }
 };
 
@@ -92,29 +108,22 @@ const getPolls = async () => {
 // TODO: make request dynamic based on logged in user
 const vote = async (voteOptionId) => {
   try {
-    const token = localStorage.getItem("authToken");
-    await axios.post(
-        `http://localhost:3000/votes/${voteOptionId}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // Add the token to the header
-          },
-        }
-    );
+    const response = await axios.post(`http://localhost:3000/votes/${voteOptionId}`);
+    console.log("Vote successful:", response.data);
     getPolls(); // Refresh polls after voting
   } catch (error) {
     console.error("Error voting:", error);
+    if (error.response) {
+      alert(`Error voting: ${error.response.data.message}`);
+    }
   }
 };
 
+
+
 // ensures the polls are fetched on page load
 onBeforeMount(() => {
-  if (!isLoggedIn.value) {
-    window.location.href = "/";
-  } else {
-    getPolls(); // Fetch polls only if the user is authorized
-  }
+  getPolls(); // Always fetch polls, regardless of authentication
 });
 </script>
 

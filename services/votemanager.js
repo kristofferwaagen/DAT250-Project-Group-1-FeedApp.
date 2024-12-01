@@ -24,6 +24,7 @@ class VoteManager {
 
   // Opprett en ny vote for en spesifikk bruker og VoteOption
   async createVote(username, voteOptionId) {
+    console.log("Creating vote for user:", username, "with option ID:", voteOptionId);
     const newVote = new Vote({
       username: username,
       voteOptionId: voteOptionId,
