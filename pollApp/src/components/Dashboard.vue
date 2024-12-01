@@ -14,7 +14,7 @@ const isLoggedIn = computed(() => !!localStorage.getItem("authToken"));
 
 const getUser = async () => {
   const username = localStorage.getItem("authToken");
-  const response = await axios.get("http://localhost:3000/users/" + username);
+  const response = await axios.get("/api/users/" + username);
   console.log(response);
   return response;
 };
@@ -41,7 +41,7 @@ const createPoll = async () => {
     const validUntil = new Date();
     validUntil.setDate(publishedAt.getDate() + 30);
 
-    const response = await axios.post("http://localhost:3000/polls/", {
+    const response = await axios.post("/api/polls/", {
       question: question.value,
       publishedAt,
       validUntil,
@@ -62,7 +62,7 @@ const createPoll = async () => {
 // sends a GET request to the server to fetch all polls
 const getPolls = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/polls/");
+    const response = await axios.get("/api/polls/");
     polls.value = response.data;
     console.log(polls);
   } catch (error) {}
@@ -73,13 +73,10 @@ const getPolls = async () => {
 const vote = async (voteOptionId) => {
   try {
     const username = localStorage.getItem("authToken");
-    const voteRes = await axios.post(
-      "http://localhost:3000/votes/" + username,
-      { voteOptionId: voteOptionId }
-    );
-    const countRes = await axios.post(
-      "http://localhost:3000/polls/" + voteOptionId
-    );
+    const voteRes = await axios.post("/api/votes/" + username, {
+      voteOptionId: voteOptionId,
+    });
+    const countRes = await axios.post("/api/polls/" + voteOptionId);
     getPolls();
   } catch (error) {}
 };

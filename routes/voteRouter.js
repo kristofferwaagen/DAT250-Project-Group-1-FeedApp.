@@ -5,7 +5,7 @@ const VoteController = require("../controllers/voteController");
 const cors = require("cors");
 
 // CORS-støtte for http://localhost:5173
-router.use(cors({ origin: "http://localhost:5173" })); // Frontend kjører her?
+router.use(cors({ origin: "http://frontend:5173" })); // Frontend kjører her?
 
 // Definer ruter og koble dem til VoteController
 router.get("/:username", (req, res) => VoteController.getUserVotes(req, res));

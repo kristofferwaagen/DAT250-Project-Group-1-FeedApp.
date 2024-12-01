@@ -11,7 +11,7 @@ export default defineConfig({
     // sets up a proxy to make HTTP requests simpler. All calls to /api will be routed to localhost:3000
     proxy: {
       "/api": {
-        target: "http://localhost:3000",
+        target: "http://backend:3000",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ""),
       },

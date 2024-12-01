@@ -1,5 +1,5 @@
 // models/poll.js
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const pollSchema = new mongoose.Schema({
   question: {
@@ -17,11 +17,11 @@ const pollSchema = new mongoose.Schema({
   voteOptions: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'VoteOption'
-    }
-  ]  
+      ref: "VoteOption",
+    },
+  ],
 });
 
-const Poll = mongoose.model('Poll', pollSchema);
+const Poll = mongoose.model("Poll", pollSchema);
 
 module.exports = Poll;

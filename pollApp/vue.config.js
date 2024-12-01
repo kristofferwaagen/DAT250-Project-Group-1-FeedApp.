@@ -1,6 +1,6 @@
 module.exports = {
-    configureWebpack: {
-      entry: './pollapp/src/main.js'  
-    }
-  };
-  
+  configureWebpack: {
+    entry: "./pollapp/src/main.js",
+  },
+  publicPath: "/",
+};

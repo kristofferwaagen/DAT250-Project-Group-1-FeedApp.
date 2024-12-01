@@ -16,7 +16,7 @@ async function login(formData) {
   let email = formData.email;
   if (username != "" && email != "") {
     try {
-      const response = await axios.get(`api/users/${username}`);
+      const response = await axios.get(`/api/users/${username}`);
       if (response.status === 200) {
         localStorage.setItem("authToken", username);
         router.push("/dashboard");

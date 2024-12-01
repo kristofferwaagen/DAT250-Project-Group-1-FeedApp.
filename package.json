@@ -1,5 +1,5 @@
 {
-  "name": "dat250-feedapp-backend",
+  "name": "backend",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -23,7 +23,9 @@
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.13.1",
     "vue-router": "^4.4.5",
-    "vuex": "^4.1.0"
+    "vuex": "^4.1.0",
+    "mongodb-memory-server": "^10.1.2",
+    "mongoose": "^8.8.3"
   },
   "devDependencies": {
     "@vue/cli-service": "^5.0.0",
