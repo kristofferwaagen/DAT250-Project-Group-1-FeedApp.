@@ -108,9 +108,53 @@ const getPolls = async () => {
 // TODO: make request dynamic based on logged in user
 const vote = async (voteOptionId) => {
   try {
-    const response = await axios.post(`http://localhost:3000/votes/${voteOptionId}`);
-    console.log("Vote successful:", response.data);
-    getPolls(); // Refresh polls after voting
+    const token = localStorage.getItem("authToken");
+
+    // Determine if the user is logged in
+    const isLoggedIn = !!token;
+
+    let username = null;
+
+    if (isLoggedIn) {
+      // Decode the username from the token if logged in
+      const decodedToken = jwtDecode(token); // Assuming you imported jwt-decode
+      username = decodedToken.username;
+    }
+
+    // Send the vote request
+    const voteRes = await axios.post(
+        isLoggedIn
+            ? `http://localhost:3000/votes/${username}`
+            : `http://localhost:3000/votes/anonymous`, // Fallback for anonymous users
+        { voteOptionId: voteOptionId },
+        isLoggedIn
+            ? {
+              headers: {
+                Authorization: `Bearer ${token}`, // Include token if logged in
+              },
+            }
+            : {}
+    );
+
+    console.log("Vote response:", voteRes.data);
+
+    // Increment the vote count for the poll
+    const countRes = await axios.post(
+        `http://localhost:3000/polls/${voteOptionId}`,
+        {},
+        isLoggedIn
+            ? {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+            : {}
+    );
+
+    console.log("Vote count updated:", countRes.data);
+
+    // Refresh polls after voting
+    getPolls();
   } catch (error) {
     console.error("Error voting:", error);
     if (error.response) {
@@ -118,6 +162,8 @@ const vote = async (voteOptionId) => {
     }
   }
 };
+
+
 
 
 
