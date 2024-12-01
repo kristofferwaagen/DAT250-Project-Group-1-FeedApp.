@@ -20,8 +20,8 @@ class AuthController {
 
             // Opprett JWT-token
             const token = jwt.sign(
-                { id: user._id, username: user.username, email: user.email }, // Legg til informasjonen fra bruker i tokenet
-                'your_jwt_secret', // Husk å bytte ut med en mer sikker hemmelighet i produksjon
+                { id: user._id, username: user.username, email: user.email, role: user.role }, // Legg til informasjonen fra bruker i tokenet
+                process.env.JWT_SECRET, // Husk å bytte ut med en mer sikker hemmelighet i produksjon
                 { expiresIn: '1h' } // Tokenet utløper etter 1 time
             );
 
@@ -34,7 +34,7 @@ class AuthController {
 
     // POST: Registrering av bruker
     async register(req, res) {
-        const { username, email } = req.body; // Bruker både username og email
+        const { username, email, role = "user" } = req.body; // Bruker både username og email
 
         try {
             // Sjekk om brukernavnet eller e-posten allerede er i bruk
@@ -52,6 +52,7 @@ class AuthController {
             const newUser = new User({
                 username,
                 email,
+                role
             });
 
             await newUser.save(); // Lagre den nye brukeren i databasen

@@ -35,11 +35,21 @@ class VoteController {
   async createVote(req, res) {
     const username = req.params.username;
     const voteOptionId = req.body.voteOptionId;
+    if (!voteOptionId) {
+      return res.status(400).json({ message: "voteOptionId is required" });
+    }
     //const voteData = { publishedAt, voteOption, username };
+
+    console.log("Vote request received:", { username, voteOptionId });
+
+    if (!voteOptionId) {
+      return res.status(400).json({ message: "voteOptionId is required" });
+    }
 
     try {
       // Create the vote using the vote manager
       const vote = await voteManager.createVote(username, voteOptionId);
+      console.log("Vote created successfully:", vote);
 
       // Publish the vote to RabbitMQ
       //await this.pollManager.publishToQueue(voteData);

@@ -88,16 +88,22 @@ class PollController {
 
   // POST: oppdater antall votes på en voteOption
   async updateVoteCount(req, res) {
+    const { voteOptionId } = req.params;
+
+    if (!voteOptionId) {
+      return res.status(400).send("Missing vote option ID");
+    }
+
     try {
-      let voteOption = await VoteOption.findById(req.params.voteOptionId);
-      const updateVoteCount = await this.pollManager.incrementVoteCount(
-        voteOption
-      );
-      if (updateVoteCount) {
-        return res.status(200).json(updateVoteCount);
+      let voteOption = await VoteOption.findById(voteOptionId); // Check if voteOption exists
+      if (!voteOption) {
+        return res.status(404).send("VoteOption not found");
       }
-      res.status(404).send("VoteOption not found");
+
+      const updateVoteCount = await this.pollManager.incrementVoteCount(voteOption);
+      return res.status(200).json(updateVoteCount);
     } catch (error) {
+      console.error("Error updating vote count:", error);
       res.status(500).send("Error updating vote count");
     }
   }

@@ -1,14 +1,29 @@
 const express = require("express");
 const router = express.Router();
-const UserController = require("../controllers/userController");
+
+const userController = require("../controllers/userController");
+const authenticateJWT = require("../middleware/authenticateJWT");
+const authorizeRoles = require("../middleware/authorizeRoles"); 
+
 const cors = require("cors");
 
-router.use(cors({ origin: "http://localhost:5173" }));
+// Routes
+router.get("/", authenticateJWT, (req, res) => userController.getUsers(req, res));
+router.get("/:username", authenticateJWT, (req, res) => userController.getUserByUsername(req, res));
+router.put("/:username", authenticateJWT, (req, res) => userController.updateUser(req, res));
 
-router.get("/", (req, res) => UserController.getUsers(req, res));  
-router.get("/:username", (req, res) => UserController.getUserByUsername(req, res));  
-router.put("/:username", (req, res) => UserController.updateUser(req, res));  
-router.delete("/:username", (req, res) => UserController.deleteUser(req, res));  
-router.delete("/", (req, res) => UserController.deleteAllUsers(req, res));  
+// Protect DELETE routes with both authentication and role-based authorization
+router.delete(
+    "/:username",
+    authenticateJWT,
+    authorizeRoles("admin"), // Require 'admin' role
+    (req, res) => userController.deleteUser(req, res)
+);
+router.delete(
+    "/",
+    authenticateJWT,
+    authorizeRoles("admin"), // Require 'admin' role
+    (req, res) => userController.deleteAllUsers(req, res)
+);
 
 module.exports = router;

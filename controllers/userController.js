@@ -2,6 +2,7 @@
 const UserManager = require("../services/usermanager");
 const userManager = new UserManager();
 
+
 class UserController {
   constructor() {
     this.userManager = new UserManager();

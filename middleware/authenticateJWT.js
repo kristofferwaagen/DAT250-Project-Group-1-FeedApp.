@@ -1,24 +1,27 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 const authenticateJWT = (req, res, next) => {
-    // Hent token fra headers
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    console.log('Token received:', token);  // Debugging: Sjekk om token blir hentet
+    // Extract token from headers
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+
+    console.log("Token received:", token); // Debugging: Check if token is received
 
     if (!token) {
-        return res.status(401).json({ message: 'No token provided' });
+        // Allow public access if no token is provided
+        req.user = null; // No user information in the request
+        return next();
     }
 
     try {
-        const decoded = jwt.verify(token, 'your_jwt_secret'); // Verifiser tokenet
-        console.log('Decoded token:', decoded);  // Debugging: Sjekk om dekodingen er vellykket
-        req.user = decoded;  // Legg dekodet data på request-objektet
-        next();  // Fortsett til neste middleware eller rute
+        const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verify the token
+        console.log("Decoded token:", decoded); // Debugging: Check decoded token
+        req.user = decoded; // Attach decoded data to the request
+        next(); // Proceed to the next middleware or route
     } catch (error) {
-        console.log('Token verification failed:', error);  // Debugging: Logging feilmelding
-        res.status(401).json({ message: 'Invalid token' });
+        console.log("Token verification failed:", error); // Debugging: Log error
+        res.status(401).json({ message: "Invalid token" });
     }
 };
 
 module.exports = authenticateJWT;
+
