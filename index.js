@@ -5,7 +5,7 @@ const voteRouter = require("./routes/voteRouter");
 const userRouter = require("./routes/userRouter");
 const authRouter = require("./routes/authRouter");
 const cors = require("cors");
-const authenticateJWT = require("./middleware/authenticateJWT");  // Importer autentisering middleware
+//const authenticateJWT = require("./middleware/authenticateJWT");  
 const app = express();
 const port = process.env.PORT || 3000;
 const pollWorker = require('./workers/pollWorker');
@@ -36,7 +36,7 @@ mongoose
   });
 
 // Bruk autentisering på ruter som skal beskyttes
-app.use("/polls", authenticateJWT, pollRouter);  // Beskytter poll-ruter med autentisering
+app.use("/polls", pollRouter);  // Beskytter poll-ruter med autentisering
 app.use("/votes", voteRouter);  // Beskytter vote-ruter med autentisering
 app.use("/users", userRouter);  // Beskytter user-ruter med autentisering
 

@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
+
 const userController = require("../controllers/userController");
 const authenticateJWT = require("../middleware/authenticateJWT");
-const authorizeRoles = require("../middleware/authorizeRoles"); // Import the role-based authorization middleware
+const authorizeRoles = require("../middleware/authorizeRoles"); 
+
 const cors = require("cors");
-
-
 
 // Routes
 router.get("/", authenticateJWT, (req, res) => userController.getUsers(req, res));
