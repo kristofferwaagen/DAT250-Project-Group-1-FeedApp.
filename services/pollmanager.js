@@ -3,6 +3,7 @@
 const Poll = require("../models/poll");
 const amqp = require("amqplib");
 const VoteOption = require("../models/voteOption");
+const { synchronizeDatabase } = require("../setup/setup");
 
 class PollManager {
   constructor() {
@@ -70,6 +71,8 @@ class PollManager {
     };
     await this.publishToQueue(this.pollQueue, pollData);
 
+    await synchronizeDatabase();
+
     return savedPoll;
   }
 
@@ -93,6 +96,9 @@ class PollManager {
         voteOptions: updatedPoll.voteOptions,
       };
       await this.publishToQueue(this.pollQueue, pollData);
+
+      await synchronizeDatabase();
+
       return updatedPoll;
     }
     return null;
@@ -118,6 +124,8 @@ class PollManager {
         question: deletedPoll.question,
       };
       await this.publishToQueue(this.pollQueue, pollData);
+
+      await synchronizeDatabase();
     }
     return deletedPoll;
   }
@@ -127,6 +135,9 @@ class PollManager {
     const result = await Poll.deleteMany();
 
     await this.publishToQueue(this.pollQueue, { action: "deleteAll" });
+
+    await synchronizeDatabase();
+
     return result;
   }
 }
