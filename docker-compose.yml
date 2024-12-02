@@ -12,9 +12,12 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - mongo
-      - rabbitmq
-      - postgres
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+      postgres:
+        condition: service_started
     networks:
       - poll-network
 
@@ -38,9 +41,19 @@ services:
   rabbitmq:
     image: rabbitmq:management
     container_name: pollapp-rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: /
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:15672" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
     networks:
       - poll-network
 

@@ -3,7 +3,7 @@ const Poll = require("../models/poll");
 
 const client = new Client({
   user: "feed-app-user",
-  host: "localhost",
+  host: "postgres",
   database: "feed_app_sql",
   password: "feedapp123",
   port: 5433,
@@ -13,7 +13,7 @@ async function setupDatabase() {
   try {
     const adminClient = new Client({
       user: "feed-app-user",
-      host: "localhost",
+      host: "postgres",
       database: "postgres",
       password: "feedapp123",
       port: 5433,
