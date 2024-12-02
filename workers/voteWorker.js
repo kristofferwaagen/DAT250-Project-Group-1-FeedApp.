@@ -7,7 +7,7 @@ const VoteOption = require('../models/voteOption');
 
 async function workVotes() {
     try {
-        const connection = await amqp.connect('amqp://localhost');
+        const connection = await amqp.connect('amqp://rabbitmq');
         const channel = await connection.createChannel();
         const queue = 'votes_queue';
 

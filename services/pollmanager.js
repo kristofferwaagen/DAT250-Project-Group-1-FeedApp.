@@ -16,7 +16,7 @@ class PollManager {
   //Setter opp rabbitmq conenction og kanal
   async init() {
     try {
-      this.connection = await amqp.connect("amqp://localhost");
+      this.connection = await amqp.connect("amqp://rabbitmq");
       this.channel = await this.connection.createChannel();
 
       await this.channel.assertQueue(this.queue, { durable: true });

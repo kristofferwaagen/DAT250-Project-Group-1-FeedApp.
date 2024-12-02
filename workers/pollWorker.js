@@ -3,7 +3,7 @@ const Poll = require('../models/poll');
 
 async function consumePolls(){
     try {
-        const connection = await amqp.connect('amqp://localhost');
+        const connection = await amqp.connect('amqp://rabbitmq');
         const channel = await connection.createChannel();
         const queue = 'polls_queue';
 
