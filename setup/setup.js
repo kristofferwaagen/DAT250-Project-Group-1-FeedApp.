@@ -2,11 +2,11 @@ const { Client, Pool } = require("pg");
 const Poll = require("../models/poll");
 
 const client = new Client({
-  user: "feed-app-user",
-  host: "postgres",
-  database: "feed_app_sql",
-  password: "feedapp123",
-  port: 5433,
+  user: process.env.PG_USER,
+  host: process.env.PG_HOST,
+  database: process.env.PG_DATABASE,
+  password: process.env.PG_PASSWORD,
+  port: process.env.PG_PORT,
 });
 
 async function setupDatabase() {
@@ -16,7 +16,7 @@ async function setupDatabase() {
       host: "postgres",
       database: "postgres",
       password: "feedapp123",
-      port: 5433,
+      port: 5432,
     });
     await adminClient.connect();
     console.log("Connected to PostgreSQL with 'feed-app-user'");

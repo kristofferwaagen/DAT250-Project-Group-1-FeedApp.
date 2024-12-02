@@ -1,5 +1,3 @@
-//Mongoose virker direkte på MongoDB uten å måtte bruke SQL, lignende funksjoner her som i JPA
-// services/pollmanager.js
 const Poll = require("../models/poll");
 const amqp = require("amqplib");
 const VoteOption = require("../models/voteOption");
@@ -13,45 +11,61 @@ class PollManager {
     this.channel = null;
     this.init();
   }
-  //Setter opp rabbitmq conenction og kanal
-  async init() {
-    try {
-      this.connection = await amqp.connect("amqp://rabbitmq");
-      this.channel = await this.connection.createChannel();
 
-      await this.channel.assertQueue(this.queue, { durable: true });
-      await this.channel.assertQueue(this.pollQueue, { durable: true });
-    } catch (error) {
-      console.error("Error connecting to Rabbitmq:", error);
+  // Initialize RabbitMQ connection
+  async init() {
+    const maxRetries = 5;
+    let retries = 0;
+
+    while (retries < maxRetries) {
+      try {
+        console.log("Connecting to RabbitMQ...");
+        this.connection = await amqp.connect(process.env.RABBITMQ_URL || "amqp://rabbitmq");
+        this.channel = await this.connection.createChannel();
+
+        await this.channel.assertQueue(this.queue, { durable: true });
+        await this.channel.assertQueue(this.pollQueue, { durable: true });
+        console.log("Connected to RabbitMQ.");
+        break;
+      } catch (error) {
+        retries++;
+        console.error(`Error connecting to RabbitMQ (attempt ${retries}):`, error);
+        if (retries < maxRetries) {
+          console.log("Retrying in 5 seconds...");
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+        } else {
+          console.error("Max retries reached for RabbitMQ connection. Exiting...");
+          process.exit(1);
+        }
+      }
     }
   }
-  //Sender message til queuen
+
+  // Publish message to RabbitMQ queue
   async publishToQueue(queue, message) {
     try {
       if (!this.channel) {
-        console.error("Rabbitmq channel is not initialized");
+        console.error("RabbitMQ channel is not initialized.");
         return;
       }
-      this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
-        persistent: true,
-      });
-      console.log("Message sent to rabbitmq queue (${queue}):", message);
+      this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), { persistent: true });
+      console.log(`Message sent to RabbitMQ queue (${queue}):`, message);
     } catch (error) {
       console.error("Error publishing message:", error);
     }
   }
 
-  // Hent alle polls fra databasen
+  // Fetch all polls from the database
   async getPolls() {
     return Poll.find().populate("voteOptions");
   }
 
-  // Hent en spesifikk poll ved ID
+  // Fetch a specific poll by ID
   async getPollById(pollId) {
     return Poll.findById(pollId);
   }
 
-  // Opprett ny poll i databasen
+  // Create a new poll in the database
   async createPoll(question, publishedAt, validUntil, voteOptions) {
     const newPoll = new Poll({
       question,
@@ -69,14 +83,14 @@ class PollManager {
       validUntil: savedPoll.validUntil,
       voteOptions: savedPoll.voteOptions,
     };
-    await this.publishToQueue(this.pollQueue, pollData);
 
+    await this.publishToQueue(this.pollQueue, pollData);
     await synchronizeDatabase();
 
     return savedPoll;
   }
 
-  // Oppdater en poll i databasen ved ID
+  // Update a poll by ID
   async updatePoll(pollId, question, publishedAt, validUntil, voteOptions) {
     const poll = await Poll.findById(pollId);
     if (poll) {
@@ -95,8 +109,8 @@ class PollManager {
         validUntil: updatedPoll.validUntil,
         voteOptions: updatedPoll.voteOptions,
       };
-      await this.publishToQueue(this.pollQueue, pollData);
 
+      await this.publishToQueue(this.pollQueue, pollData);
       await synchronizeDatabase();
 
       return updatedPoll;
@@ -104,43 +118,42 @@ class PollManager {
     return null;
   }
 
+  // Increment vote count for a specific vote option
   async incrementVoteCount(voteOption) {
-    const currentCount = voteOption.voteCount;
-    const updatedCount = currentCount + 1;
-    let updatedVoteOption = await VoteOption.findByIdAndUpdate(voteOption._id, {
-      voteCount: updatedCount,
-    });
+    const updatedVoteOption = await VoteOption.findByIdAndUpdate(
+        voteOption._id,
+        { $inc: { voteCount: 1 } },
+        { new: true }
+    );
     return updatedVoteOption;
   }
 
-  // Slett en poll fra databasen ved ID
+  // Delete a poll by ID
   async deletePoll(pollId) {
     const deletedPoll = await Poll.findByIdAndDelete(pollId);
 
     if (deletedPoll) {
       const pollData = {
         action: "delete",
-        pollId: deltedPoll._id,
+        pollId: deletedPoll._id,
         question: deletedPoll.question,
       };
-      await this.publishToQueue(this.pollQueue, pollData);
 
+      await this.publishToQueue(this.pollQueue, pollData);
       await synchronizeDatabase();
     }
     return deletedPoll;
   }
 
-  // Slett alle polls fra databasen
+  // Delete all polls
   async deleteAllPolls() {
     const result = await Poll.deleteMany();
 
     await this.publishToQueue(this.pollQueue, { action: "deleteAll" });
-
     await synchronizeDatabase();
 
     return result;
   }
 }
 
-// Eksporter klassen slik at den kan brukes andre steder
 module.exports = PollManager;

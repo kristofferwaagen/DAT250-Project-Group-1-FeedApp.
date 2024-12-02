@@ -24,7 +24,7 @@ app.use("/auth", authRouter);
 
 // Koble til databasen
 mongoose
-  .connect("mongodb://mongo:27017/feedAppDB", {
+  .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })

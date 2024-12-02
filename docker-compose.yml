@@ -1,79 +1,64 @@
-version: '3.9'
 services:
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    environment:
-      - MONGO_URI=mongodb://mongo:27017/pollapp
-      - RABBITMQ_URI=amqp://rabbitmq
-      - PORT=3000
-      - POSTGRES_URI=postgresql://feed-app-user:feedapp123@postgres:5432/feed_app_sql
     ports:
       - "3000:3000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/feedAppDB
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_USER=feed-app-user
+      - PG_PASSWORD=feedapp123
+      - PG_DATABASE=feed_app_sql
+      - JWT_SECRET=your_jwt_secret
+      - RABBITMQ_URL=amqp://rabbitmq
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mongo:
-        condition: service_started
-      postgres:
-        condition: service_started
-    networks:
-      - poll-network
+      - mongo
+      - postgres
+      - rabbitmq
 
   frontend:
     build:
       context: ./pollApp
       dockerfile: Dockerfile
     ports:
-      - "5173:80"
-    networks:
-      - poll-network
+      - "5173:80" # Maps port 80 in the container to port 8080 on the host
+    environment:
+      - NODE_ENV=production
 
   mongo:
-    image: mongo
-    container_name: pollapp-mongo
+    image: mongo:5
+    container_name: mongo
     ports:
       - "27017:27017"
-    networks:
-      - poll-network
-
-  rabbitmq:
-    image: rabbitmq:management
-    container_name: pollapp-rabbitmq
-    restart: always
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-      RABBITMQ_DEFAULT_VHOST: /
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:15672" ]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-    networks:
-      - poll-network
+    volumes:
+      - mongo_data:/data/db
 
   postgres:
-    image: postgres:14
-    container_name: postgres-feedapp
+    image: postgres:15
+    container_name: postgres
     environment:
       POSTGRES_USER: feed-app-user
       POSTGRES_PASSWORD: feedapp123
       POSTGRES_DB: feed_app_sql
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - poll-network
+      - postgres_data:/var/lib/postgresql/data
 
-networks:
-  poll-network:
-    driver: bridge
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672" # RabbitMQ management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
 volumes:
-  postgres-data:
+  mongo_data:
+  postgres_data:
+

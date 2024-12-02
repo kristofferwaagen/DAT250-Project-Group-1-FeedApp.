@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 async function connectToDatabase(){
     try {
-        await mongoose.connect('mongodb://mongo:27017/feedAppDB', {
+        await mongoose.connect(process.env.MONGO_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
