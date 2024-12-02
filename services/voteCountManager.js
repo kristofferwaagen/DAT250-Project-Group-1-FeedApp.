@@ -4,7 +4,7 @@ class voteManager{
     constructor() {
         this.pgClient = new Client({
             user: 'your_user',
-            host: 'localhost',
+            host: 'postgres',
             database: 'your_database',
             password: 'your_password',
             port: 5432,

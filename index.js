@@ -8,31 +8,39 @@ const cors = require("cors");
 //const authenticateJWT = require("./middleware/authenticateJWT");  
 const app = express();
 const port = process.env.PORT || 3000;
-const pollWorker = require('./workers/pollWorker');
-const voteWorker = require('./workers/voteWorker');
+const pollWorker = require("./workers/pollWorker");
+const voteWorker = require("./workers/voteWorker");
 const dotenv = require("dotenv").config();
+const { setupDatabase } = require("./setup/setup");
 
-app.use(cors({
+app.use(
+  cors({
     origin: "http://localhost:5173",
     credentials: true,
-}));
+  })
+);
 app.use(express.json());
 app.use("/auth", authRouter);
 
 // Koble til databasen
 mongoose
-  .connect("mongodb://127.0.0.1:27017/feedAppDB", {
+  .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-    .then(() => {
-        console.log('Connected to MongoDB')
-        //Start workers
-        pollWorker();
-        voteWorker();
-    })
+  .then(() => {
+    console.log("Connected to MongoDB");
+    //Start workers
+    pollWorker();
+    voteWorker();
+    return setupDatabase();
+  })
+  .then(() => {
+    console.log("PostgreSQL database setup complete.");
+  })
   .catch((error) => {
-    console.error("Error connecting to MongoDB:", error);
+    console.error("Error during setup:", error);
+    process.exit(1);
   });
 
 // Bruk autentisering på ruter som skal beskyttes
